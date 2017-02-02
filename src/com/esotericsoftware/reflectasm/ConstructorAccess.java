@@ -1,10 +1,9 @@
-
 package com.esotericsoftware.reflectasm;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<T> {
-	public final ClassAccess classAccess;
-	public final ClassAccess.ClassAccessor classAccessor;
+    public final ClassAccess classAccess;
+    public final ClassAccess.ClassAccessor classAccessor;
 
     @Override
     public String toString() {
@@ -16,9 +15,9 @@ public class ConstructorAccess<T> {
         classAccessor = classAccess.classAccessor;
     }
 
-    public boolean isNonStaticMemberClass () {
-		return classAccess.isNonStaticMemberClass();
-	}
+    public boolean isNonStaticMemberClass() {
+        return classAccess.isNonStaticMemberClass();
+    }
 
     /**
      * Constructor for top-level classes and static nested classes.
@@ -43,8 +42,8 @@ public class ConstructorAccess<T> {
         return (T) classAccessor.newInstance(0, enclosingInstance);
     }
 
-    static public <T> ConstructorAccess<T> get (Class<T> type) {
-        return new ConstructorAccess<T>(ClassAccess.get(type));
-	}
+    static public <T> ConstructorAccess<T> get(Class<T> type, String... dumpFile) {
+        return new ConstructorAccess<T>(ClassAccess.get(type, dumpFile));
+    }
 
 }

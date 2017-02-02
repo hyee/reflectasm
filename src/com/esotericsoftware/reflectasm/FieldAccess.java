@@ -1,4 +1,3 @@
-
 package com.esotericsoftware.reflectasm;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -16,29 +15,29 @@ public class FieldAccess {
         classAccessor = classAccess.classAccessor;
     }
 
-    public int getIndex (String fieldName) {
-		return classAccess.indexOfField(fieldName);
-	}
+    public int getIndex(String fieldName) {
+        return classAccess.indexOfField(fieldName);
+    }
 
-	public void set (Object instance, String fieldName, Object value) {
-		set(instance, getIndex(fieldName), value);
-	}
+    public void set(Object instance, String fieldName, Object value) {
+        set(instance, getIndex(fieldName), value);
+    }
 
-	public Object get (Object instance, String fieldName) {
-		return get(instance, getIndex(fieldName));
-	}
+    public Object get(Object instance, String fieldName) {
+        return get(instance, getIndex(fieldName));
+    }
 
-	public String[] getFieldNames () {
-		return classAccess.getFieldNames();
-	}
+    public String[] getFieldNames() {
+        return classAccess.getFieldNames();
+    }
 
-	public Class[] getFieldTypes () {
-		return classAccess.getFieldTypes();
-	}
+    public Class[] getFieldTypes() {
+        return classAccess.getFieldTypes();
+    }
 
-	public int getFieldCount () {
-		return classAccess.getFieldCount();
-	}
+    public int getFieldCount() {
+        return classAccess.getFieldCount();
+    }
 
     public void set(Object instance, int fieldIndex, Object value) {
         classAccessor.set(instance, fieldIndex, value);
@@ -112,11 +111,11 @@ public class FieldAccess {
         return classAccessor.getFloat(instance, fieldIndex);
     }
 
-    public String getString(Object instance, int fieldIndex){
-        return (String)get(instance, fieldIndex);
+    public String getString(Object instance, int fieldIndex) {
+        return (String) get(instance, fieldIndex);
     }
 
-    static public FieldAccess get (Class type) {
-        return new FieldAccess(ClassAccess.get(type));
-	}
+    static public FieldAccess get(Class type, String... dumpFile) {
+        return new FieldAccess(ClassAccess.get(type, dumpFile));
+    }
 }
