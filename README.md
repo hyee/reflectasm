@@ -25,7 +25,7 @@ ReflectASM is a very small Java library that provides high performance reflectio
 
 ![Constructor](http://chart.apis.google.com/chart?chtt=Constructor&chs=700x75&chd=t:4664189810,2077533665,2102928286&chds=0,4664189810&chxl=0:|ConstructorAccess|Normal|Reflection&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
-The source code for these benchmarks is included in the project. The above charts were generated on Oracle's Java 7u3, server VM.
+The source code for these benchmarks is included in the project. The above charts were generated on Oracle's Java u112 32Bit, server VM.
 
 ## Usage
 
