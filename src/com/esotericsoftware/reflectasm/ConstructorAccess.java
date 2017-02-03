@@ -3,7 +3,7 @@ package com.esotericsoftware.reflectasm;
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<T> {
     public final ClassAccess classAccess;
-    public final ClassAccess.ClassAccessor classAccessor;
+    public final ClassAccess.Accessor accessor;
 
     @Override
     public String toString() {
@@ -12,7 +12,7 @@ public class ConstructorAccess<T> {
 
     protected ConstructorAccess(ClassAccess classAccess) {
         this.classAccess = classAccess;
-        classAccessor = classAccess.classAccessor;
+        accessor = classAccess.accessor;
     }
 
     public boolean isNonStaticMemberClass() {
@@ -28,7 +28,7 @@ public class ConstructorAccess<T> {
      */
     @SuppressWarnings("unchecked")
     public T newInstance() {
-        return (T) classAccessor.newInstance();
+        return (T) accessor.newInstance();
     }
 
     /**
@@ -39,7 +39,7 @@ public class ConstructorAccess<T> {
      */
     @SuppressWarnings("unchecked")
     public T newInstance(Object enclosingInstance) {
-        return (T) classAccessor.newInstance(0, enclosingInstance);
+        return (T) accessor.newInstance(0, enclosingInstance);
     }
 
     static public <T> ConstructorAccess<T> get(Class<T> type, String... dumpFile) {

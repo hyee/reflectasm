@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 
 public class MethodAccessTest extends TestCase {
 	public void testInvoke () {
-		MethodAccess access = MethodAccess.get(SomeClass.class);
+		MethodAccess access = MethodAccess.get(SomeClass.class,".");
 		SomeClass someObject = new SomeClass();
 		Object value;
 
@@ -74,7 +74,7 @@ public class MethodAccessTest extends TestCase {
 	}
 
 	public void testInvokeInterface () {
-		MethodAccess access = MethodAccess.get(ConcurrentMap.class);
+		MethodAccess access = MethodAccess.get(ConcurrentMap.class,".");
 		ConcurrentHashMap<String, String> someMap = new ConcurrentHashMap<String, String>();
 		someMap.put("first", "one");
 		someMap.put("second", "two");
@@ -111,9 +111,9 @@ public class MethodAccessTest extends TestCase {
 			this.intValue = intValue;
 		}
 
-		public String methodWithManyArguments (int i, float f, Integer I, Float F, SomeClass c, SomeClass c1, SomeClass c2) {
+		public String methodWithManyArguments (int i, float f, Integer I, Float F, SomeClass c1,SomeClass c2,SomeClass c3) {
 			return "test";
 		}
+
 	}
-	
 }

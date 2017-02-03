@@ -2,17 +2,28 @@
 
 Please use the [ReflectASM discussion group](http://groups.google.com/group/reflectasm-users) for support.
 
+## Note
+
+This is the revised version, some differences from `EsotericSoftware/reflectasm`:
+* Supports `Java 8` only in order to remove the dependency of `asm-xxx.jar`
+* New class `ClassAccess` as the base of `MethodAccess`/`FieldAccess`/`ConstructorAccess`
+* Provides the interface to dump the dynamic class for investigation purpose
+* Provides the caching options for performance purpose(default as enabled)
+* Optimize some logics for performance purpose
+* Auto data type conversion for invoking or construction
+* Accuratly position the closest method for overloading  
+
 ## Overview
 
 ReflectASM is a very small Java library that provides high performance reflection by using code generation. An access class is generated to set/get fields, call methods, or create a new instance. The access class uses bytecode rather than Java's reflection, so it is much faster. It can also access primitive fields via bytecode to avoid boxing.
 
 ## Performance
 
-![](http://chart.apis.google.com/chart?chma=100&chtt=Field%20Set/Get&chs=700x62&chd=t:1402081,11339107&chds=0,11339107&chxl=0:|Java%20Reflection|FieldAccess&cht=bhg&chbh=10&chxt=y&chco=6600FF)
+![Method-Call](http://chart.apis.google.com/chart?chtt=Method Call&chs=700x75&chd=t:68209342,195977655,1495574653&chds=0,1495574653&chxl=0:|Reflection|MethodAccess|Normal&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
-![](http://chart.apis.google.com/chart?chma=100&chtt=Method%20Call&chs=700x62&chd=t:97390,208750&chds=0,208750&chxl=0:|Java%20Reflection|MethodAccess&cht=bhg&chbh=10&chxt=y&chco=6600AA)
+![Field Set/Get](http://chart.apis.google.com/chart?chtt=Field Set/Get&chs=700x75&chd=t:84354523,499292218,6285216709&chds=0,6285216709&chxl=0:|Reflection|FieldAccess|Normal&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
-![](http://chart.apis.google.com/chart?chma=100&chtt=Constructor&chs=700x62&chd=t:2853063,5828993&chds=0,5828993&chxl=0:|Java%20Reflection|ConstructorAccess&cht=bhg&chbh=10&chxt=y&chco=660066)
+![Constructor](http://chart.apis.google.com/chart?chtt=Constructor&chs=700x75&chd=t:4664189810,2077533665,2102928286&chds=0,4664189810&chxl=0:|ConstructorAccess|Normal|Reflection&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 The source code for these benchmarks is included in the project. The above charts were generated on Oracle's Java 7u3, server VM.
 

@@ -42,8 +42,8 @@ public class ClassLoaderTest extends TestCase {
 		assertEquals("second", testObject2.toString());
 		assertEquals("second", access2.get(testObject2, "name"));
 		
-		assertEquals(access1.classAccessor.getClass().toString(), access2.classAccessor.getClass().toString()); // Same class names
-		assertFalse(access1.classAccessor.getClass().equals(access2.classAccessor.getClass())); // But different classes
+		assertEquals(access1.accessor.getClass().toString(), access2.accessor.getClass().toString()); // Same class names
+		assertFalse(access1.accessor.getClass().equals(access2.accessor.getClass())); // But different classes
 		
 		assertEquals(initialCount+2, AccessClassLoader.activeAccessClassLoaders());
 		
@@ -70,7 +70,6 @@ public class ClassLoaderTest extends TestCase {
 			Thread.sleep(100); // test again
 			times++;
 		}
-
 		// Yeah, both reclaimed!
 		assertEquals(1, AccessClassLoader.activeAccessClassLoaders());
 	}
@@ -94,8 +93,8 @@ public class ClassLoaderTest extends TestCase {
 		assertEquals("second", testObject2.toString());
 		assertEquals("second", access2.get(testObject2, "name"));
 		
-		assertEquals(access1.classAccessor.getClass().toString(), access2.classAccessor.getClass().toString()); // Same class names
-		assertFalse(access1.classAccessor.getClass().equals(access2.classAccessor.getClass())); // But different classes
+		assertEquals(access1.accessor.getClass().toString(), access2.accessor.getClass().toString()); // Same class names
+		assertFalse(access1.accessor.getClass().equals(access2.accessor.getClass())); // But different classes
 		
 		assertEquals(initialCount+2, AccessClassLoader.activeAccessClassLoaders());
 		

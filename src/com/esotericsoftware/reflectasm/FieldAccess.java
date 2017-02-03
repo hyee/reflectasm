@@ -3,7 +3,7 @@ package com.esotericsoftware.reflectasm;
 @SuppressWarnings("UnusedDeclaration")
 public class FieldAccess {
     public final ClassAccess classAccess;
-    public final ClassAccess.ClassAccessor classAccessor;
+    public final ClassAccess.Accessor accessor;
 
     @Override
     public String toString() {
@@ -12,7 +12,7 @@ public class FieldAccess {
 
     protected FieldAccess(ClassAccess classAccess) {
         this.classAccess = classAccess;
-        classAccessor = classAccess.classAccessor;
+        accessor = classAccess.accessor;
     }
 
     public int getIndex(String fieldName) {
@@ -40,75 +40,75 @@ public class FieldAccess {
     }
 
     public void set(Object instance, int fieldIndex, Object value) {
-        classAccessor.set(instance, fieldIndex, value);
+        accessor.set(instance, fieldIndex, value);
     }
 
     public void setBoolean(Object instance, int fieldIndex, boolean value) {
-        classAccessor.setBoolean(instance, fieldIndex, value);
+        accessor.setBoolean(instance, fieldIndex, value);
     }
 
     public void setByte(Object instance, int fieldIndex, byte value) {
-        classAccessor.setByte(instance, fieldIndex, value);
+        accessor.setByte(instance, fieldIndex, value);
     }
 
     public void setShort(Object instance, int fieldIndex, short value) {
-        classAccessor.setShort(instance, fieldIndex, value);
+        accessor.setShort(instance, fieldIndex, value);
     }
 
     public void setInt(Object instance, int fieldIndex, int value) {
-        classAccessor.setInt(instance, fieldIndex, value);
+        accessor.setInt(instance, fieldIndex, value);
     }
 
     public void setLong(Object instance, int fieldIndex, long value) {
-        classAccessor.setLong(instance, fieldIndex, value);
+        accessor.setLong(instance, fieldIndex, value);
     }
 
     public void setDouble(Object instance, int fieldIndex, double value) {
-        classAccessor.setDouble(instance, fieldIndex, value);
+        accessor.setDouble(instance, fieldIndex, value);
     }
 
     public void setFloat(Object instance, int fieldIndex, float value) {
-        classAccessor.setFloat(instance, fieldIndex, value);
+        accessor.setFloat(instance, fieldIndex, value);
     }
 
     public void setChar(Object instance, int fieldIndex, char value) {
-        classAccessor.setChar(instance, fieldIndex, value);
+        accessor.setChar(instance, fieldIndex, value);
     }
 
     public Object get(Object instance, int fieldIndex) {
-        return classAccessor.get(instance, fieldIndex);
+        return accessor.get(instance, fieldIndex);
     }
 
     public char getChar(Object instance, int fieldIndex) {
-        return classAccessor.getChar(instance, fieldIndex);
+        return accessor.getChar(instance, fieldIndex);
     }
 
     public boolean getBoolean(Object instance, int fieldIndex) {
-        return classAccessor.getBoolean(instance, fieldIndex);
+        return accessor.getBoolean(instance, fieldIndex);
     }
 
     public byte getByte(Object instance, int fieldIndex) {
-        return classAccessor.getByte(instance, fieldIndex);
+        return accessor.getByte(instance, fieldIndex);
     }
 
     public short getShort(Object instance, int fieldIndex) {
-        return classAccessor.getShort(instance, fieldIndex);
+        return accessor.getShort(instance, fieldIndex);
     }
 
     public int getInt(Object instance, int fieldIndex) {
-        return classAccessor.getInt(instance, fieldIndex);
+        return accessor.getInt(instance, fieldIndex);
     }
 
     public long getLong(Object instance, int fieldIndex) {
-        return classAccessor.getLong(instance, fieldIndex);
+        return accessor.getLong(instance, fieldIndex);
     }
 
     public double getDouble(Object instance, int fieldIndex) {
-        return classAccessor.getDouble(instance, fieldIndex);
+        return accessor.getDouble(instance, fieldIndex);
     }
 
     public float getFloat(Object instance, int fieldIndex) {
-        return classAccessor.getFloat(instance, fieldIndex);
+        return accessor.getFloat(instance, fieldIndex);
     }
 
     public String getString(Object instance, int fieldIndex) {

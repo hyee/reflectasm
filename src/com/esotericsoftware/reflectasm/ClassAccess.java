@@ -1,17 +1,19 @@
 package com.esotericsoftware.reflectasm;
 
+import com.esotericsoftware.reflectasm.util.NumberUtils;
 import jdk.internal.org.objectweb.asm.*;
+import jdk.internal.org.objectweb.asm.Type;
 import sun.misc.Unsafe;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import static com.esotericsoftware.reflectasm.util.NumberUtils.getDistance;
+import static com.esotericsoftware.reflectasm.util.NumberUtils.namePrimitiveMap;
 import static java.lang.reflect.Modifier.isStatic;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -19,16 +21,21 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 public class ClassAccess {
     public final static Object[] NO_ARGUMENTS = new Object[0];
     public final static Object STATIC_INSTANCE = null;
-    public final static int MODIFIER_VARARGS = 2 ^ 20;
-    public final ClassAccessor classAccessor;
+    public final static int MODIFIER_VARARGS = 2 ^ 18;
+    public static String classPrefix="asm.";
+    public final Accessor accessor;
     public ClassInfo info;
 
     public static boolean IS_CACHED = true;
     static HashMap<Class, ClassAccess> cachedAccessors = new HashMap();
+    static ConcurrentHashMap<Integer,Integer> methoIndexer= new ConcurrentHashMap();
+    static final String thisPath=ClassAccess.class.getName().replace(".","/");
+    static final String accessorPath=Accessor.class.getName().replace(".","/");
+    static final String classInfoPath=ClassInfo.class.getName().replace(".","/");
 
-    protected ClassAccess(ClassInfo info, ClassAccessor classAccessor) {
+    protected ClassAccess(ClassInfo info, Accessor accessor) {
         this.info = info;
-        this.classAccessor = classAccessor;
+        this.accessor = accessor;
     }
 
     static <M extends Member> Map<M, Integer> dump(List<M> members) {
@@ -55,18 +62,35 @@ public class ClassAccess {
         info.constructors = dump(constructors);
     }
 
+    public static void buildIndex(ClassInfo info) {
+        if(info==null||info.attrIndex!=null) return;
+        info.attrIndex=new HashMap<>();
+        String[][] attrs=new String[][]{info.fieldNames,info.methodNames};
+        HashMap<String,ArrayList<Integer>> map=new HashMap<>();
+        for(int i=0;i<attrs.length;i++) {
+            for(int j=0;j<attrs[i].length;j++) {
+                String attr=Character.toString((char)(i+1))+attrs[i][j];
+                if(!map.containsKey(attr)) map.put(attr,new ArrayList<Integer>());
+                map.get(attr).add(j);
+            }
+        }
+        for(String key:map.keySet()) {
+            info.attrIndex.put(key,map.get(key).toArray(new Integer[]{}));
+        }
+    }
+
     public static ClassAccess get(Class type, String... dumpFile) {
         String className = type.getName();
-        final String accessClassName = "ReflectASM." + className;
+        final String accessClassName =classPrefix + className;
         Class accessClass;
-        ClassAccessor access;
+        Accessor access;
         ClassAccess self;
         final AccessClassLoader loader = AccessClassLoader.get(type);
         try {
             synchronized (cachedAccessors) {
                 if (IS_CACHED && cachedAccessors.containsKey(type)) return cachedAccessors.get(type);
                 accessClass = loader.loadClass(accessClassName);
-                access = (ClassAccessor) accessClass.newInstance();
+                access = (Accessor) accessClass.newInstance();
                 self = new ClassAccess(access.getInfo(), access);
                 if (IS_CACHED) cachedAccessors.put(type, self);
                 return self;
@@ -130,11 +154,20 @@ public class ClassAccess {
             final byte[] bytes = byteCode(classInfo, methods, fields, accessClassNameInternal, classNameInternal);
             if (dumpFile.length > 0) try {
                 File f = new File(dumpFile[0]);
-                if (!f.exists()) f.createNewFile();
+
+                if (!f.exists()) {
+                    if(!dumpFile[0].endsWith(".class"))
+                        f.createNewFile();
+                    else f.mkdir();
+                }
+                if(f.isDirectory()) {
+                    f=new File(f.getCanonicalPath()+File.separator+accessClassName+".class");
+                }
                 FileOutputStream f1 = new FileOutputStream(f);
                 f1.write(bytes);
                 f1.flush();
                 f1.close();
+                System.out.println("Class saved to "+f.getCanonicalPath());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -145,7 +178,8 @@ public class ClassAccess {
                 accessClass = loader.defineClass(accessClassName, bytes);
             }
             try {
-                access = (ClassAccessor) accessClass.newInstance();
+                access = (Accessor) accessClass.newInstance();
+                classInfo.attrIndex=access.getInfo().attrIndex;
                 access.setInfo(classInfo);
                 self = new ClassAccess(classInfo, access);
                 if (IS_CACHED) cachedAccessors.put(type, self);
@@ -199,32 +233,17 @@ public class ClassAccess {
         }
     }
 
-    private static final Map<String, Class<?>> namePrimitiveMap = new HashMap<>();
 
-    static {
-        namePrimitiveMap.put("boolean", Boolean.class);
-        namePrimitiveMap.put("byte", Byte.class);
-        namePrimitiveMap.put("char", Character.class);
-        namePrimitiveMap.put("short", Short.class);
-        namePrimitiveMap.put("int", Integer.class);
-        namePrimitiveMap.put("long", Long.class);
-        namePrimitiveMap.put("double", Double.class);
-        namePrimitiveMap.put("float", Float.class);
-        namePrimitiveMap.put("void", Void.class);
-    }
 
-    private static Pattern re = Pattern.compile("^\\[L(.+);$");
 
     private static void insertArray(MethodVisitor mv, Object[] array, String attrName, String accessClassNameInternal) {
-        final String clzInfo = ClassInfo.class.getName().replace('.', '/');
         if (attrName != null) {
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + clzInfo + ";");
+            mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
         }
         mv.visitIntInsn(BIPUSH, array.length);
         String arrayClz = array.getClass().getName().replace('.', '/');
-        if (array instanceof Object[][]) mv.visitTypeInsn(ANEWARRAY, arrayClz.substring(1));
-        else mv.visitTypeInsn(ANEWARRAY, re.matcher(arrayClz).replaceAll("$1"));
+        mv.visitTypeInsn(ANEWARRAY, array.getClass().getComponentType().getName().replace('.', '/'));
         for (int i = 0; i < array.length; i++) {
             mv.visitInsn(DUP);
             mv.visitIntInsn(BIPUSH, i);
@@ -243,35 +262,30 @@ public class ClassAccess {
             mv.visitInsn(AASTORE);
         }
         if (attrName != null)
-            mv.visitFieldInsn(PUTFIELD, clzInfo, attrName, array.getClass().getName().replace('.', '/'));
+            mv.visitFieldInsn(PUTFIELD, classInfoPath, attrName, array.getClass().getName().replace('.', '/'));
     }
 
-    private static byte[] byteCode(ClassInfo info, List<Method> methods, List<Field> fields, String accessClassNameInternal, String classNameInternal) {
-        final String clzInfo = ClassInfo.class.getName().replace('.', '/');
-        //final String baseName = "java/lang/Object";
+    private static void insertClassInfo(ClassInfo info,ClassWriter cw,String accessClassNameInternal, String classNameInternal) {
         final String baseName = "sun/reflect/MagicAccessorImpl";
-        final String basePkg = ClassAccessor.class.getPackage().getName().replace('.', '/');
+        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, null, baseName, new String[]{accessorPath});
 
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, null, baseName, new String[]{ClassAccessor.class.getName().replace('.', '/')});
-
-        FieldVisitor fv = cw.visitField(0, "classInfo", "L" + clzInfo + ";", null, null);
+        FieldVisitor fv = cw.visitField(0, "classInfo", "L" + classInfoPath + ";", null, null);
 
         fv.visitEnd();
 
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()L" + clzInfo + ";", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()L" + classInfoPath + ";", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + clzInfo + ";");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
         mv.visitInsn(ARETURN);
         mv.visitMaxs(1, 1);
         mv.visitEnd();
-        mv = cw.visitMethod(ACC_PUBLIC, "setInfo", "(L" + clzInfo + ";)V", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC, "setInfo", "(L" + classInfoPath + ";)V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + clzInfo + ";");
+        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
         mv.visitInsn(RETURN);
         mv.visitMaxs(2, 2);
         mv.visitEnd();
@@ -283,10 +297,10 @@ public class ClassAccess {
 
         //Define class attributes(fields/methods/constructors)
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitTypeInsn(NEW, clzInfo);
+        mv.visitTypeInsn(NEW, classInfoPath);
         mv.visitInsn(DUP);
-        mv.visitMethodInsn(INVOKESPECIAL, clzInfo, "<init>", "()V", false);
-        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + clzInfo + ";");
+        mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V", false);
+        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
 
         insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
         insertArray(mv, info.parameterTypes, "parameterTypes", accessClassNameInternal);
@@ -298,17 +312,26 @@ public class ClassAccess {
         insertArray(mv, info.constructorParameterTypes, "constructorParameterTypes", accessClassNameInternal);
         insertArray(mv, info.constructorModifiers, "constructorModifiers", accessClassNameInternal);
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + basePkg + "/ClassInfo;");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
         mv.visitLdcInsn(Type.getType("L" + classNameInternal + ";"));
-        mv.visitFieldInsn(PUTFIELD, clzInfo, "baseClass", "Ljava/lang/Class;");
+        mv.visitFieldInsn(PUTFIELD, classInfoPath, "baseClass", "Ljava/lang/Class;");
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + basePkg + "/ClassInfo;");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
         mv.visitInsn(info.isNonStaticMemberClass ? ICONST_0 : ICONST_1);
-        mv.visitFieldInsn(PUTFIELD, clzInfo, "isNonStaticMemberClass", "Z");
+        mv.visitFieldInsn(PUTFIELD, classInfoPath, "isNonStaticMemberClass", "Z");
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(L"+classInfoPath+";)V", false);
+
         mv.visitInsn(RETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
+    };
 
+    private static byte[] byteCode(ClassInfo info, List<Method> methods, List<Field> fields, String accessClassNameInternal, String classNameInternal) {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+        insertClassInfo(info,cw,accessClassNameInternal,classNameInternal);
         //***********************************************************************************************
         // constructor access
         insertNewInstance(cw, classNameInternal, info);
@@ -352,17 +375,6 @@ public class ClassAccess {
             mv.visitTypeInsn(NEW, classNameInternal);
             mv.visitInsn(DUP);
             mv.visitMethodInsn(INVOKESPECIAL, classNameInternal, "<init>", "()V");
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "newObjectInstance", "()Ljava/lang/Object;", null, null);
-            mv.visitCode();
-            mv.visitTypeInsn(NEW, classNameInternal);
-            //mv.visitInsn(DUP);
-            //classNameInternal = "java/lang/Object";
-            //mv.visitMethodInsn(INVOKESPECIAL, classNameInternal, "<init>", "()V");
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -720,10 +732,10 @@ public class ClassAccess {
         switch (type.getSort()) {
             case Type.VOID:
                 mv.visitInsn(ACONST_NULL);
-                break;
+                return;
             case Type.BOOLEAN:
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;");
-                break;
+                return;
             case Type.BYTE:
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;");
                 break;
@@ -749,18 +761,23 @@ public class ClassAccess {
     }
 
     private static void unbox(MethodVisitor mv, Type type) {
+        final String util=NumberUtils.class.getName().replace(".","/");
+        if(namePrimitiveMap.containsKey(type.getClassName()))
+            mv.visitFieldInsn(GETSTATIC, namePrimitiveMap.get(type.getClassName()).getName().replace(".", "/"), "TYPE", "Ljava/lang/Class;");
+        else mv.visitLdcInsn(type);
+        mv.visitMethodInsn(INVOKESTATIC, util, "convert", "(Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;", false);
         switch (type.getSort()) {
             case Type.BOOLEAN:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z");
                 break;
-            case Type.BYTE:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B");
-                break;
             case Type.CHAR:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C");
+                break;
+            case Type.BYTE:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B");
                 break;
             case Type.SHORT:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
@@ -779,7 +796,7 @@ public class ClassAccess {
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J");
                 break;
             case Type.DOUBLE:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D");
                 break;
             case Type.ARRAY:
@@ -793,7 +810,7 @@ public class ClassAccess {
 
     @Override
     public String toString() {
-        return classAccessor.toString();
+        return accessor.toString();
     }
 
     public boolean isNonStaticMemberClass() {
@@ -839,33 +856,88 @@ public class ClassAccess {
         throw new IllegalArgumentException("Unable to find public method: " + methodName);
     }
 
+    public Integer getSignature(String methodName,Class... paramTypes) {
+        int signature=info.baseClass.hashCode()*65599+methodName.hashCode();
+        for(int i=0;i<paramTypes.length;i++) {
+            signature=signature*65599+(paramTypes[i]==null?0:paramTypes[i].hashCode());
+        }
+        return signature;
+    }
     /**
      * Returns the index of the first method with the specified name and param types.
      */
     public int indexOfMethod(String methodName, Class... paramTypes) {
-        final String[] methodNames = info.methodNames;
         int result = -1;
         int distance = 0;
-        for (int i = 0, n = methodNames.length; i < n; i++) {
-            if (!methodNames[i].equals(methodName)) continue;
-            if (Arrays.equals(paramTypes, info.parameterTypes[i])) return i;
+        final int stepSize=100;
+        Integer[] candidates;
+        Class[][] srcTypes;
+        Integer[] modifiers;
+        if(methodName.equals("<new>")) {
+            if(info.constructorModifiers.length==1) return 0;
+            candidates=new Integer[info.constructorModifiers.length];
+            for(int i=0;i<candidates.length;i++) candidates[i]=i;
+            srcTypes=info.constructorParameterTypes;
+            modifiers=info.constructorModifiers;
+        } else {
+            candidates=indexesOf(methodName,"method");
+            srcTypes=info.parameterTypes;
+            modifiers=info.methodModifiers;
+        }
+        if(candidates.length==1) return candidates[0];
 
+        int signature=-1;
+        if(IS_CACHED) {
+            signature=getSignature(methodName,paramTypes);
+            if(methoIndexer.containsKey(signature)) {
+                int targetIndex = methoIndexer.get(signature);
+                for (int index : candidates) if (index == targetIndex) return index;
+            }
+        }
+        for(int index:candidates) {
+            if (Arrays.equals(paramTypes, srcTypes[index])) return index;
+            int thisDistance=0;
+            int argCount = paramTypes.length;
+            int parameterCount = srcTypes[index].length;
+            Object[] arguments = new Object[parameterCount];
+            for(int i=0;i<Math.min(argCount,parameterCount);i++) {
+                if(i==parameterCount-1&&isVarArgs(modifiers[index])) break;
+                thisDistance+=stepSize+NumberUtils.getDistance(paramTypes[i],srcTypes[index][i]);
+            }
+            if(argCount>=parameterCount-1&&isVarArgs(modifiers[index])) {
+                thisDistance+=stepSize;
+                int dis=5;
+                Class arrayType=srcTypes[index][parameterCount-1].getComponentType();
+                for (int i = parameterCount - 1; i < argCount; i++) {
+                    dis=Math.min(dis,getDistance(paramTypes[i],arrayType));
+                }
+                if(argCount==parameterCount-1) dis=getDistance(null,arrayType);
+                thisDistance+=dis;
+            } else {
+                thisDistance-=Math.abs(parameterCount-argCount)*stepSize;
+            }
+            if(thisDistance>distance) {
+                distance=thisDistance;
+                result=index;
+            }
         }
         if (result == -1)
-            throw new IllegalArgumentException("Unable to find public method: " + methodName + " " + Arrays.toString(paramTypes));
+            throw new IllegalArgumentException("Unable to find method: " + methodName + " " + Arrays.toString(paramTypes));
+        if(IS_CACHED) methoIndexer.put(signature,result);
         return result;
     }
+
+
 
     /**
      * Returns the index of the first method with the specified name and the specified number of arguments.
      */
     public int indexOfMethod(String methodName, int paramsCount) {
-        final String[] methodNames = info.methodNames;
         final Class[][] parameterTypes = info.parameterTypes;
-        for (int i = 0, n = methodNames.length; i < n; i++) {
-            if (methodNames[i].equals(methodName) && parameterTypes[i].length == paramsCount) return i;
+        for(int index:indexesOf(methodName,"method")) {
+            if (parameterTypes[index].length == paramsCount) return index;
         }
-        throw new IllegalArgumentException("Unable to find public method: " + methodName + " with " + paramsCount + " params.");
+        throw new IllegalArgumentException("Unable to find method: " + methodName + " with " + paramsCount + " params.");
     }
 
     public String[] getMethodNames() {
@@ -892,11 +964,14 @@ public class ClassAccess {
         return info.fieldTypes.length;
     }
 
+    public Integer[] indexesOf(String name,String type) {
+       final String attr=Character.toString((char)(type.toLowerCase().equals("field")?1:2))+name;
+       if(info.attrIndex.containsKey(attr)) return info.attrIndex.get(attr);
+        throw new IllegalArgumentException("Unable to find "+type+": " + name);
+    }
+
     public int indexOfField(String fieldName) {
-        String[] fieldNames = info.fieldNames;
-        for (int i = 0, n = fieldNames.length; i < n; i++)
-            if (fieldNames[i].equals(fieldName)) return i;
-        throw new IllegalArgumentException("Unable to find public field: " + fieldName);
+        return indexesOf(fieldName,"field")[0];
     }
 
     public int indexOfField(Field field) {
@@ -907,98 +982,110 @@ public class ClassAccess {
     }
 
     public Object newInstance(int constructorIndex, Object... args) {
-        return classAccessor.newInstance(constructorIndex, args);
+        return accessor.newInstance(constructorIndex, args);
     }
 
     public Object newInstance() {
-        return classAccessor.newInstance();
+        return accessor.newInstance();
     }
 
-    public Object newObjectInstance() {
-        return classAccessor.newObjectInstance();
-    }
-
-    public Object newInstance(Object instance, int constructorIndex, Object... args) {
-        return classAccessor.newInstance(instance, constructorIndex, args);
-    }
 
     public Object invoke(Object instance, int methodIndex, Object... args) {
-        return classAccessor.invoke(instance, methodIndex, args);
+        Object[] arg=args;
+        if(isVarArgs(info.methodModifiers[methodIndex])) {
+            Class[] params=info.parameterTypes[methodIndex];
+            int len=params.length;
+            if(args.length>len) {
+                arg=new Object[len];
+                arg[len-1]=new Object[args.length-len];
+                for(int i=0;i<args.length;i++) {
+                    if(i<len) arg[i]=args[i];
+                    else ((Object[])arg[len])[i-len]=args[i];
+                }
+            }
+        }
+        return accessor.invoke(instance, methodIndex, arg);
+    }
+
+    public Object invoke(Object instance, String methodName, Object... args) {
+        Class[] paramTypes=new Class[args.length];
+        for(int i=0;i<args.length;i++) paramTypes[i]=args[i]==null?null:args[i].getClass();
+        return accessor.invoke(instance, indexOfMethod(methodName,paramTypes), args);
     }
 
     public void set(Object instance, int fieldIndex, Object value) {
-        classAccessor.set(instance, fieldIndex, value);
+        accessor.set(instance, fieldIndex, value);
     }
 
     public void setBoolean(Object instance, int fieldIndex, boolean value) {
-        classAccessor.setBoolean(instance, fieldIndex, value);
+        accessor.setBoolean(instance, fieldIndex, value);
     }
 
     public void setByte(Object instance, int fieldIndex, byte value) {
-        classAccessor.setByte(instance, fieldIndex, value);
+        accessor.setByte(instance, fieldIndex, value);
     }
 
     public void setShort(Object instance, int fieldIndex, short value) {
-        classAccessor.setShort(instance, fieldIndex, value);
+        accessor.setShort(instance, fieldIndex, value);
     }
 
     public void setInt(Object instance, int fieldIndex, int value) {
-        classAccessor.setInt(instance, fieldIndex, value);
+        accessor.setInt(instance, fieldIndex, value);
     }
 
     public void setLong(Object instance, int fieldIndex, long value) {
-        classAccessor.setLong(instance, fieldIndex, value);
+        accessor.setLong(instance, fieldIndex, value);
     }
 
     public void setDouble(Object instance, int fieldIndex, double value) {
-        classAccessor.setDouble(instance, fieldIndex, value);
+        accessor.setDouble(instance, fieldIndex, value);
     }
 
     public void setFloat(Object instance, int fieldIndex, float value) {
-        classAccessor.setFloat(instance, fieldIndex, value);
+        accessor.setFloat(instance, fieldIndex, value);
     }
 
     public void setChar(Object instance, int fieldIndex, char value) {
-        classAccessor.setChar(instance, fieldIndex, value);
+        accessor.setChar(instance, fieldIndex, value);
     }
 
     public Object get(Object instance, int fieldIndex) {
-        return classAccessor.get(instance, fieldIndex);
+        return accessor.get(instance, fieldIndex);
     }
 
     public char getChar(Object instance, int fieldIndex) {
-        return classAccessor.getChar(instance, fieldIndex);
+        return accessor.getChar(instance, fieldIndex);
     }
 
     public boolean getBoolean(Object instance, int fieldIndex) {
-        return classAccessor.getBoolean(instance, fieldIndex);
+        return accessor.getBoolean(instance, fieldIndex);
     }
 
     public byte getByte(Object instance, int fieldIndex) {
-        return classAccessor.getByte(instance, fieldIndex);
+        return accessor.getByte(instance, fieldIndex);
     }
 
     public short getShort(Object instance, int fieldIndex) {
-        return classAccessor.getShort(instance, fieldIndex);
+        return accessor.getShort(instance, fieldIndex);
     }
 
     public int getInt(Object instance, int fieldIndex) {
-        return classAccessor.getInt(instance, fieldIndex);
+        return accessor.getInt(instance, fieldIndex);
     }
 
     public long getLong(Object instance, int fieldIndex) {
-        return classAccessor.getLong(instance, fieldIndex);
+        return accessor.getLong(instance, fieldIndex);
     }
 
     public double getDouble(Object instance, int fieldIndex) {
-        return classAccessor.getDouble(instance, fieldIndex);
+        return accessor.getDouble(instance, fieldIndex);
     }
 
     public float getFloat(Object instance, int fieldIndex) {
-        return classAccessor.getFloat(instance, fieldIndex);
+        return accessor.getFloat(instance, fieldIndex);
     }
 
-    public static interface ClassAccessor {
+    public static interface Accessor {
         abstract public ClassInfo getInfo();
 
         abstract public void setInfo(ClassInfo info);
@@ -1007,9 +1094,6 @@ public class ClassAccess {
 
         abstract public Object newInstance();
 
-        abstract public Object newObjectInstance();
-
-        abstract public Object newInstance(Object instance, int constructorIndex, Object... args);
 
         abstract public Object invoke(Object instance, int methodIndex, Object... args);
 

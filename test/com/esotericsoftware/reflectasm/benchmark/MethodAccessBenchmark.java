@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 
 public class MethodAccessBenchmark extends Benchmark {
 	public MethodAccessBenchmark () throws Exception {
-		int count = 100000;
+		int count = 300000;
 		Object[] dontCompileMeAway = new Object[count];
 		Object[] args = new Object[0];
 
@@ -25,20 +25,26 @@ public class MethodAccessBenchmark extends Benchmark {
 				dontCompileMeAway[ii] = method.invoke(someObject, args);
 		}
 		warmup = false;
-
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
 			for (int ii = 0; ii < count; ii++)
 				dontCompileMeAway[ii] = access.invoke(someObject, index, args);
-			end("MethodAccess");
 		}
+		end("MethodAccess");
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
 			for (int ii = 0; ii < count; ii++)
 				dontCompileMeAway[ii] = method.invoke(someObject, args);
-			end("Reflection");
-		}
 
+		}
+		end("Reflection");
+		start();
+		for (int i = 0; i < 100; i++) {
+			for (int ii = 0; ii < count; ii++)
+				dontCompileMeAway[ii] = someObject.getName();
+
+		}
+		end("Normal");
 		chart("Method Call");
 	}
 

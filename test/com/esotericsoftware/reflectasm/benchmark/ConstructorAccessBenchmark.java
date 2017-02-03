@@ -5,7 +5,7 @@ import com.esotericsoftware.reflectasm.ConstructorAccess;
 
 public class ConstructorAccessBenchmark extends Benchmark {
 	public ConstructorAccessBenchmark () throws Exception {
-		int count = 1000000;
+		int count = 300000;
 		Object[] dontCompileMeAway = new Object[count];
 
 		Class type = SomeClass.class;
@@ -18,20 +18,27 @@ public class ConstructorAccessBenchmark extends Benchmark {
 			for (int ii = 0; ii < count; ii++)
 				dontCompileMeAway[ii] = type.newInstance();
 		warmup = false;
-
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
+
 			for (int ii = 0; ii < count; ii++)
 				dontCompileMeAway[ii] = access.newInstance();
-			end("ConstructorAccess");
+
 		}
+		end("ConstructorAccess");
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
 			for (int ii = 0; ii < count; ii++)
 				dontCompileMeAway[ii] = type.newInstance();
-			end("Reflection");
-		}
 
+		}
+		end("Reflection");
+		start();
+		for (int i = 0; i < 100; i++) {
+			for (int ii = 0; ii < count; ii++)
+				dontCompileMeAway[ii] = new SomeClass();
+		}
+		end("Normal");
 		chart("Constructor");
 	}
 

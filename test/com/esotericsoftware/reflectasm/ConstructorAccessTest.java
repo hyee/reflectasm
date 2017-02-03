@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 
 public class ConstructorAccessTest extends TestCase {
 	public void testNewInstance () {
-		ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class);
+		ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class,".");
 		SomeClass someObject = new SomeClass();
 		assertEquals(someObject, access.newInstance());
 		assertEquals(someObject, access.newInstance());
@@ -25,10 +25,10 @@ public class ConstructorAccessTest extends TestCase {
 	public void testHasArgumentConstructor () {
 		HasArgumentConstructor someObject = new HasArgumentConstructor("bla");
 		ConstructorAccess<HasArgumentConstructor> access = ConstructorAccess.get(HasArgumentConstructor.class);
-		assertEquals(someObject, access.classAccessor.newInstance(0,"bla"));
-		assertEquals(someObject, access.classAccessor.newInstance(0,"bla"));
-		assertEquals(someObject, access.classAccessor.newInstance(0,"bla"));
-		assertEquals(someObject, access.classAccessor.newInstance(0,"bla"));
+		assertEquals(someObject, access.accessor.newInstance(0,"bla"));
+		assertEquals(someObject, access.accessor.newInstance(0,"bla"));
+		assertEquals(someObject, access.accessor.newInstance(0,"bla"));
+		assertEquals(someObject, access.accessor.newInstance(0,"bla"));
 	}
 
 	public void testHasPrivateConstructor () {

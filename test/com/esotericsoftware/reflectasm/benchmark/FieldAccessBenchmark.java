@@ -8,7 +8,7 @@ import com.esotericsoftware.reflectasm.FieldAccess;
 
 public class FieldAccessBenchmark extends Benchmark {
 	public FieldAccessBenchmark () throws Exception {
-		int count = 1000000;
+		int count = 300000;
 		Object[] dontCompileMeAway = new Object[count];
 
 		FieldAccess access = FieldAccess.get(SomeClass.class);
@@ -28,24 +28,30 @@ public class FieldAccessBenchmark extends Benchmark {
 			}
 		}
 		warmup = false;
-
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
 			for (int ii = 0; ii < count; ii++) {
 				access.set(someObject, index, "first");
 				dontCompileMeAway[ii] = access.get(someObject, index);
 			}
-			end("FieldAccess");
 		}
+		end("FieldAccess");
+		start();
 		for (int i = 0; i < 100; i++) {
-			start();
 			for (int ii = 0; ii < count; ii++) {
 				field.set(someObject, "first");
 				dontCompileMeAway[ii] = field.get(someObject);
 			}
-			end("Reflection");
 		}
-
+		end("Reflection");
+		start();
+		for (int i = 0; i < 100; i++) {
+			for (int ii = 0; ii < count; ii++) {
+				someObject.name="first";
+				dontCompileMeAway[ii] = someObject.name;
+			}
+		}
+		end("Normal");
 		chart("Field Set/Get");
 	}
 
