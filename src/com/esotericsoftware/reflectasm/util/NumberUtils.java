@@ -74,21 +74,17 @@ public abstract class NumberUtils {
         Class clz;
         if (!(from instanceof Class)) clz = from.getClass();
         else clz = (Class) from;
-
         if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass.isArray() && clz.isArray()) {
             int distance = 5;
-            Object[] objects = (Object[]) from;
             Class<?> baseClass = toClass.getComponentType();
-            for (int i = 0; i < objects.length; i++) {
-                if (isGetDistance) distance = Math.min(distance, convertOrGetDistance(objects[i], baseClass, true));
-                else objects[i] = convertOrGetDistance(objects[i], baseClass, false);
+            Object objects=null;
+            if(!isGetDistance) objects=Array.newInstance(baseClass,Array.getLength(from));
+            for (int i = 0; i < Array.getLength(from); i++) {
+                if (isGetDistance) distance = Math.min(distance, convertOrGetDistance(Array.get(from,i), baseClass, true));
+                else Array.set(objects,i,convertOrGetDistance(Array.get(from,i), baseClass, false));
             }
-            if (objects.length == 0) {
-                if (from instanceof Class) from = new Class[0];
-                else from = Array.newInstance(baseClass, 0);
-            }
-            return (T) (isGetDistance ? distance : from);
+            return (T) (isGetDistance ? distance : objects);
         }
         if (toClass == String.class) return (T) (isGetDistance ? Integer.valueOf(2) : String.valueOf(from));
         if (STANDARD_NUMBER_TYPES.contains(toClass)) {
@@ -97,7 +93,13 @@ public abstract class NumberUtils {
             if (clz == String.class)
                 return (T) (isGetDistance ? Integer.valueOf(1) : parseNumber((String) from, toClass));
         }
-        return (T) (isGetDistance ? Integer.valueOf(0) : from);
+        if(namePrimitiveMap.containsKey(toClass.getName())&&namePrimitiveMap.get(toClass.getName())==clz) {
+            return (T) (isGetDistance ? Integer.valueOf(5) : from);
+        }
+        if(namePrimitiveMap.containsKey(clz.getName())&&namePrimitiveMap.get(clz.getName())==toClass) {
+            return (T) (isGetDistance ? Integer.valueOf(5) : from);
+        }
+        return (T) (isGetDistance ? Integer.valueOf(0) : toClass.cast(from));
     }
 
     public static <T> T convert(Object from, Class toClass) {

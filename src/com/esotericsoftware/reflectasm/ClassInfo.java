@@ -14,11 +14,11 @@ public class ClassInfo {
     public Class[] fieldTypes;
     public Integer[] fieldModifiers;
     public String[] methodNames;
-    public Class[][] parameterTypes;
+    public Class[][] methodParamTypes;
     public Class[] returnTypes;
     public Integer[] methodModifiers;
     public Integer[] constructorModifiers;
-    public Class[][] constructorParameterTypes;
+    public Class[][] constructorParamTypes;
     public boolean isNonStaticMemberClass;
     public Class baseClass;
     public Map<String, Integer[]> attrIndex;

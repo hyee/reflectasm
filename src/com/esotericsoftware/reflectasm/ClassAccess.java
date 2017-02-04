@@ -1,7 +1,7 @@
 package com.esotericsoftware.reflectasm;
 
 import com.esotericsoftware.reflectasm.util.NumberUtils;
-import org.objectweb.asm.*;
+import jdk.internal.org.objectweb.asm.*;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -15,15 +15,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.esotericsoftware.reflectasm.util.NumberUtils.*;
 import static java.lang.reflect.Modifier.isStatic;
-import static org.objectweb.asm.Opcodes.*;
+import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond", "ConstantConditions", "Unsafe"})
 public class ClassAccess {
     public final static Object[] NO_ARGUMENTS = new Object[0];
     public final static Object STATIC_INSTANCE = null;
     public final static int MODIFIER_VARARGS = 2 ^ 18;
-    public final static String CONSTRUCTOR_ALIAS="<new>";
-    public final static String CONSTRUCTOR_ALIAS_ESCAPE="\3\2\1"+CONSTRUCTOR_ALIAS+"\1\2\3";
+    public final static String CONSTRUCTOR_ALIAS = "<new>";
+    public final static String CONSTRUCTOR_ALIAS_ESCAPE = "\3\2\1" + CONSTRUCTOR_ALIAS + "\1\2\3";
     public static String classPrefix = "asm.";
     public final Accessor accessor;
     public ClassInfo info;
@@ -54,21 +54,10 @@ public class ClassAccess {
         return (modifier & MODIFIER_VARARGS) != 0;
     }
 
-    private static void collectMembers(ClassInfo info, Class type) {
-        ArrayList<Method> methods = new ArrayList<Method>();
-        ArrayList<Constructor<?>> constructors = new ArrayList<Constructor<?>>();
-        ArrayList<Field> fields = new ArrayList<Field>();
-        collectMembers(type, methods, fields, constructors);
-        int n = methods.size();
-        info.methods = dump(methods);
-        info.fields = dump(fields);
-        info.constructors = dump(constructors);
-    }
-
     public static void buildIndex(ClassInfo info) {
         if (info == null || info.attrIndex != null) return;
         info.attrIndex = new HashMap<>();
-        String[] constructors = new String[info.constructorParameterTypes.length];
+        String[] constructors = new String[info.constructorParamTypes.length];
         Arrays.fill(constructors, CONSTRUCTOR_ALIAS);
         String[][] attrs = new String[][]{info.fieldNames, info.methodNames, constructors};
         HashMap<String, ArrayList<Integer>> map = new HashMap<>();
@@ -80,7 +69,8 @@ public class ClassAccess {
             }
         }
         for (String key : map.keySet()) {
-            info.attrIndex.put(key, map.get(key).toArray(new Integer[]{}));
+            Integer[] indexes = map.get(key).toArray(new Integer[]{});
+            info.attrIndex.put(key, indexes);
         }
     }
 
@@ -116,7 +106,7 @@ public class ClassAccess {
         classInfo.constructors = dump(constructors);
         int n = methods.size();
         classInfo.methodModifiers = new Integer[n];
-        classInfo.parameterTypes = new Class[n][];
+        classInfo.methodParamTypes = new Class[n][];
         classInfo.returnTypes = new Class[n];
         classInfo.methodNames = new String[n];
         classInfo.baseClass = type;
@@ -124,18 +114,18 @@ public class ClassAccess {
             Method m = methods.get(i);
             classInfo.methodModifiers[i] = m.getModifiers();
             if (m.isVarArgs()) classInfo.methodModifiers[i] += MODIFIER_VARARGS;
-            classInfo.parameterTypes[i] = m.getParameterTypes();
+            classInfo.methodParamTypes[i] = m.getParameterTypes();
             classInfo.returnTypes[i] = m.getReturnType();
             classInfo.methodNames[i] = m.getName();
         }
         n = constructors.size();
         classInfo.constructorModifiers = new Integer[n];
-        classInfo.constructorParameterTypes = new Class[n][];
+        classInfo.constructorParamTypes = new Class[n][];
         for (int i = 0; i < n; i++) {
             Constructor<?> c = constructors.get(i);
             classInfo.constructorModifiers[i] = c.getModifiers();
             if (c.isVarArgs()) classInfo.methodModifiers[i] += MODIFIER_VARARGS;
-            classInfo.constructorParameterTypes[i] = c.getParameterTypes();
+            classInfo.constructorParamTypes[i] = c.getParameterTypes();
         }
         n = fields.size();
         classInfo.fieldModifiers = new Integer[n];
@@ -205,6 +195,17 @@ public class ClassAccess {
         }
     }
 
+    private static void collectMembers(ClassInfo info, Class type) {
+        ArrayList<Method> methods = new ArrayList<Method>();
+        ArrayList<Constructor<?>> constructors = new ArrayList<Constructor<?>>();
+        ArrayList<Field> fields = new ArrayList<Field>();
+        collectMembers(type, methods, fields, constructors);
+        int n = methods.size();
+        info.methods = dump(methods);
+        info.fields = dump(fields);
+        info.constructors = dump(constructors);
+    }
+
     private static void collectMembers(Class<?> type, List<Method> methods, List<Field> fields, List<Constructor<?>> constructors) {
         if (type.isInterface()) {
             recursiveAddInterfaceMethodsToList(type, methods);
@@ -267,7 +268,7 @@ public class ClassAccess {
 
     private static void insertClassInfo(ClassInfo info, ClassWriter cw, String accessClassNameInternal, String classNameInternal) {
         final String baseName = "sun/reflect/MagicAccessorImpl";
-        final String clzInfoDesc=Type.getDescriptor(ClassInfo.class);
+        final String clzInfoDesc = Type.getDescriptor(ClassInfo.class);
         cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, null, baseName, new String[]{accessorPath});
 
         FieldVisitor fv = cw.visitField(0, "classInfo", clzInfoDesc, null, null);
@@ -304,13 +305,13 @@ public class ClassAccess {
         mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
 
         insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
-        insertArray(mv, info.parameterTypes, "parameterTypes", accessClassNameInternal);
+        insertArray(mv, info.methodParamTypes, "methodParamTypes", accessClassNameInternal);
         insertArray(mv, info.returnTypes, "returnTypes", accessClassNameInternal);
         insertArray(mv, info.methodModifiers, "methodModifiers", accessClassNameInternal);
         insertArray(mv, info.fieldNames, "fieldNames", accessClassNameInternal);
         insertArray(mv, info.fieldTypes, "fieldTypes", accessClassNameInternal);
         insertArray(mv, info.fieldModifiers, "fieldModifiers", accessClassNameInternal);
-        insertArray(mv, info.constructorParameterTypes, "constructorParameterTypes", accessClassNameInternal);
+        insertArray(mv, info.constructorParamTypes, "constructorParamTypes", accessClassNameInternal);
         insertArray(mv, info.constructorModifiers, "constructorModifiers", accessClassNameInternal);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
@@ -411,7 +412,7 @@ public class ClassAccess {
                 buffer.setLength(0);
                 buffer.append('(');
 
-                Class[] paramTypes = info.constructorParameterTypes[i];
+                Class[] paramTypes = info.constructorParamTypes[i];
                 for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
                     mv.visitVarInsn(ALOAD, 2);
                     mv.visitIntInsn(BIPUSH, paramIndex);
@@ -654,7 +655,6 @@ public class ClassAccess {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, getterMethodName, "(Ljava/lang/Object;I)" + typeNameInternal, null, null);
         mv.visitCode();
         mv.visitVarInsn(ILOAD, 2);
-
         if (!fields.isEmpty()) {
             maxStack--;
             Label[] labels = new Label[fields.size()];
@@ -744,8 +744,8 @@ public class ClassAccess {
             case Type.FLOAT:
             case Type.LONG:
             case Type.DOUBLE:
-                Type clz=Type.getType(namePrimitiveMap.get(type.getClassName()));
-                mv.visitMethodInsn(INVOKESTATIC, clz.getInternalName(), "valueOf", "("+type.getDescriptor()+")"+clz.getDescriptor());
+                Type clz = Type.getType(namePrimitiveMap.get(type.getClassName()));
+                mv.visitMethodInsn(INVOKESTATIC, clz.getInternalName(), "valueOf", "(" + type.getDescriptor() + ")" + clz.getDescriptor());
                 break;
         }
     }
@@ -760,9 +760,9 @@ public class ClassAccess {
             case Type.FLOAT:
             case Type.LONG:
             case Type.DOUBLE:
-                String name=Type.getInternalName(namePrimitiveMap.get(type.getClassName()));
+                String name = Type.getInternalName(namePrimitiveMap.get(type.getClassName()));
                 mv.visitTypeInsn(CHECKCAST, name);
-                mv.visitMethodInsn(INVOKEVIRTUAL, name, type.getClassName()+"Value", "()"+type.getDescriptor());
+                mv.visitMethodInsn(INVOKEVIRTUAL, name, type.getClassName() + "Value", "()" + type.getDescriptor());
                 break;
             case Type.ARRAY:
                 mv.visitTypeInsn(CHECKCAST, type.getDescriptor());
@@ -783,7 +783,7 @@ public class ClassAccess {
     }
 
     public Class[][] getConstructorParameterTypes() {
-        return info.constructorParameterTypes;
+        return info.constructorParamTypes;
     }
 
     public Integer[] getMethodModifiers() {
@@ -865,52 +865,78 @@ public class ClassAccess {
         return signature;
     }
 
+    private String typesToString(String methodName, Object... argTypes) {
+        StringBuilder sb = new StringBuilder(info.baseClass.getName());
+        sb.append(".").append(methodName).append("(");
+        for (int i = 0; i < argTypes.length; i++) {
+            Class clz;
+            if(argTypes[i] == null) clz=null;
+            else if(argTypes[i] instanceof Class) clz=(Class)argTypes[i];
+            else clz=argTypes[i].getClass();
+            sb.append(clz == null ? "null" : clz.getCanonicalName());
+            sb.append(i == argTypes.length - 1 ? "" : ",");
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
     /**
      * Returns the index of the first method with the specified name and param types.
      */
-    public int indexOfMethod(String methodName, Class... paramTypes) {
+    public int indexOfMethod(String methodName, Class... argTypes) {
         Integer[] candidates = indexesOf(methodName, "method");
-        if (candidates.length == 1) return candidates[0];
         int result = -1;
+        Class[][] paramTypes;
+        Integer[] modifiers;
         int signature = -1;
         int distance = 0;
+        int minDistance = 10;
         final int stepSize = 100;
-        Class[][] srcTypes;
-        Integer[] modifiers;
         if (methodName.equals(CONSTRUCTOR_ALIAS)) {
             for (int i = 0; i < candidates.length; i++) candidates[i] = i;
-            srcTypes = info.constructorParameterTypes;
+            paramTypes = info.constructorParamTypes;
             modifiers = info.constructorModifiers;
         } else {
-            srcTypes = info.parameterTypes;
+            paramTypes = info.methodParamTypes;
             modifiers = info.methodModifiers;
         }
-
         if (IS_CACHED) {
-            signature = getSignature(methodName, paramTypes);
+            signature = getSignature(methodName, argTypes);
             if (methoIndexer.containsKey(signature)) {
                 int targetIndex = methoIndexer.get(signature);
-                for (int index : candidates) if (index == targetIndex) return index;
+                minDistance=targetIndex%10000;
+                targetIndex=targetIndex/10000;
+                for (int index : candidates) if (index == targetIndex) {
+                    result = index;
+                }
             }
         }
-        for (int index : candidates) {
-            if (Arrays.equals(paramTypes, srcTypes[index])) return index;
+
+        if (result == -1) for (int index : candidates) {
+            if (Arrays.equals(argTypes, paramTypes[index])) {
+                if (IS_CACHED) methoIndexer.put(signature, index);
+                return index;
+            }
             int thisDistance = 0;
-            int argCount = paramTypes.length;
-            int parameterCount = srcTypes[index].length;
+            int argCount = argTypes.length;
+            int parameterCount = paramTypes[index].length;
             Object[] arguments = new Object[parameterCount];
             for (int i = 0; i < Math.min(argCount, parameterCount); i++) {
                 if (i == parameterCount - 1 && isVarArgs(modifiers[index])) break;
-                thisDistance += stepSize + NumberUtils.getDistance(paramTypes[i], srcTypes[index][i]);
+                int dis = NumberUtils.getDistance(argTypes[i], paramTypes[index][i]);
+                minDistance = Math.min(dis, minDistance);
+                thisDistance += stepSize + dis;
+                //System.out.println((argTypes[i]==null?"null":argTypes[i].getCanonicalName())+" <-> "+paramTypes[index][i].getCanonicalName()+": "+dis);
             }
             if (argCount >= parameterCount - 1 && isVarArgs(modifiers[index])) {
                 thisDistance += stepSize;
                 int dis = 5;
-                Class arrayType = srcTypes[index][parameterCount - 1].getComponentType();
+                Class arrayType = paramTypes[index][parameterCount - 1].getComponentType();
                 for (int i = parameterCount - 1; i < argCount; i++) {
-                    dis = Math.min(dis, getDistance(paramTypes[i], arrayType));
+                    dis = Math.min(dis, getDistance(argTypes[i], arrayType));
                 }
                 if (argCount == parameterCount - 1) dis = getDistance(null, arrayType);
+                minDistance = Math.min(dis, minDistance);
                 thisDistance += dis;
             } else {
                 thisDistance -= Math.abs(parameterCount - argCount) * stepSize;
@@ -920,9 +946,15 @@ public class ClassAccess {
                 result = index;
             }
         }
-        if (result == -1)
-            throw new IllegalArgumentException("Unable to find method: " + methodName + " " + Arrays.toString(paramTypes));
-        if (IS_CACHED) methoIndexer.put(signature, result);
+        if (IS_CACHED) methoIndexer.put(signature, minDistance*10000+result);
+
+        if (result != -1 && argTypes.length == 0 && paramTypes[result].length == 0) return result;
+        if (result == -1 || minDistance == 0 //
+                || (argTypes.length != paramTypes[result].length && !isVarArgs(modifiers[result])) //
+                || (isVarArgs(modifiers[result]) && argTypes.length < paramTypes[result].length - 1)) {
+            throw new IllegalArgumentException("Unable to apply method:\n    " + typesToString(methodName, argTypes) //
+                    + (result == -1 ? "" : "\n => " + typesToString(methodName, paramTypes[result])));
+        }
         return result;
     }
 
@@ -930,7 +962,7 @@ public class ClassAccess {
      * Returns the index of the first method with the specified name and the specified number of arguments.
      */
     public int indexOfMethod(String methodName, int paramsCount) {
-        final Class[][] parameterTypes = info.parameterTypes;
+        final Class[][] parameterTypes = info.methodParamTypes;
         for (int index : indexesOf(methodName, "method")) {
             if (parameterTypes[index].length == paramsCount) return index;
         }
@@ -942,7 +974,7 @@ public class ClassAccess {
     }
 
     public Class[][] getParameterTypes() {
-        return info.parameterTypes;
+        return info.methodParamTypes;
     }
 
     public Class[] getReturnTypes() {
@@ -961,9 +993,26 @@ public class ClassAccess {
         return info.fieldTypes.length;
     }
 
+    private String getMethodNameByParamTypes(Class[] paramTypes) {
+        String methodName=CONSTRUCTOR_ALIAS;
+        for(int i=0;i<info.methodParamTypes.length;i++) {
+            if(info.methodParamTypes[i]==paramTypes) {
+                methodName=info.methodNames[i];
+            }
+        }
+        return methodName;
+    }
+
     private Object[] reArgs(int modifier, Class[] paramTypes, Object... args) {
-        if(args.length==0) return args;
+        if (args.length == 0) return args;
         Object[] arg = args;
+        if((arg.length != paramTypes.length && !isVarArgs(modifier)) //
+                || (isVarArgs(modifier) && arg.length < paramTypes.length - 1)) {
+            String methodName=getMethodNameByParamTypes(paramTypes);
+            throw new IllegalArgumentException("Unable to invoke method: "//
+                    +"\n    " + typesToString(methodName, args) //
+                    +"\n    =>"+typesToString(methodName, paramTypes));
+        }
         if (isVarArgs(modifier)) {
             int len = paramTypes.length;
             if (args.length > len) {
@@ -975,17 +1024,21 @@ public class ClassAccess {
                 }
             }
         }
-        if (!IS_STRICT_CONVET)
-            for (int i = 0; i < Math.min(arg.length, paramTypes.length); i++) arg[i]=convert(arg[i], paramTypes[i]);
+        if (!IS_STRICT_CONVET) try {
+            for (int i = 0; i < Math.min(arg.length, paramTypes.length); i++) arg[i] = convert(arg[i], paramTypes[i]);
+        } catch (Exception e) {
+            String methodName=getMethodNameByParamTypes(paramTypes);
+            throw new IllegalArgumentException("Data conversion error when invoking method: "+e.getMessage()//
+                    +"\n    " + typesToString(methodName, args) //
+                    +"\n    =>"+typesToString(methodName, paramTypes));
+        }
         return arg;
     }
 
     public Object invoke(Object instance, int methodIndex, Object... args) {
-        boolean isContruct=(instance instanceof String)&&((String)instance).equals(CONSTRUCTOR_ALIAS_ESCAPE);
-        Object[] arg=reArgs(
-                isContruct?info.constructorModifiers[methodIndex]:info.methodModifiers[methodIndex],
-                isContruct?info.constructorParameterTypes[methodIndex]:info.parameterTypes[methodIndex], args);
-        return isContruct?accessor.newInstance(methodIndex, arg):accessor.invoke(instance, methodIndex, arg);
+        boolean isContruct = (instance instanceof String) && ((String) instance).equals(CONSTRUCTOR_ALIAS_ESCAPE);
+        Object[] arg = reArgs(isContruct ? info.constructorModifiers[methodIndex] : info.methodModifiers[methodIndex], isContruct ? info.constructorParamTypes[methodIndex] : info.methodParamTypes[methodIndex], args);
+        return isContruct ? accessor.newInstance(methodIndex, arg) : accessor.invoke(instance, methodIndex, arg);
     }
 
     public Object invoke(Object instance, String methodName, Object... args) {
@@ -995,22 +1048,20 @@ public class ClassAccess {
             for (int i = 0; i < args.length; i++) paramTypes[i] = args[i] == null ? null : args[i].getClass();
             index = indexOfMethod(methodName, paramTypes);
         }
-        return invoke(methodName.equals(CONSTRUCTOR_ALIAS)?CONSTRUCTOR_ALIAS_ESCAPE:instance, index, args);
+        return invoke(methodName.equals(CONSTRUCTOR_ALIAS) ? CONSTRUCTOR_ALIAS_ESCAPE : instance, index, args);
     }
 
-
     public Object newInstance(int constructorIndex, Object... args) {
-        return invoke(CONSTRUCTOR_ALIAS,constructorIndex, args);
+        return invoke(CONSTRUCTOR_ALIAS, constructorIndex, args);
     }
 
     public Object newInstance(Object... args) {
-        return invoke(null,CONSTRUCTOR_ALIAS,args);
+        return invoke(null, CONSTRUCTOR_ALIAS, args);
     }
 
     public Object newInstance() {
         return accessor.newInstance();
     }
-
 
     public void set(Object instance, int fieldIndex, Object value) {
         accessor.set(instance, fieldIndex, value);
@@ -1133,7 +1184,6 @@ public class ClassAccess {
     }
 
     public static class UnsafeHolder {
-
         public final static Unsafe theUnsafe;
 
         static {

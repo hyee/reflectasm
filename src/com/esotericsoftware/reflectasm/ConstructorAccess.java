@@ -35,11 +35,11 @@ public class ConstructorAccess<T> {
         return classAccess.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
     }
 
-    public T newInstance(int constructorIndex,Object ... args) {
-        return (T) classAccess.newInstance(constructorIndex,args);
+    public T newInstance(int constructorIndex, Object... args) {
+        return (T) classAccess.newInstance(constructorIndex, args);
     }
 
-    public T newInstance(Object ... args) {
+    public T newInstance(Object... args) {
         return (T) classAccess.newInstance(args);
     }
 

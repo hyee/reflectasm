@@ -1,5 +1,6 @@
 package com.esotericsoftware.reflectasm;
 
+import com.esotericsoftware.reflectasm.util.NumberUtils;
 import junit.framework.TestCase;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,11 +29,10 @@ public class MethodAccessTest extends TestCase {
         assertEquals(null, value);
         value = access.invoke(someObject, "getIntValue");
         assertEquals(1234, value);
-
-        value = access.invoke(someObject, "methodWithManyArguments", 1, 2f, 3, 4.2f, null, null, null);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3,4}, 4.2f, null,true);
         assertEquals("test", value);
 
-        int index = access.getIndex("methodWithManyArguments", int.class, float.class, Integer.class, Float.class, SomeClass.class, SomeClass.class, SomeClass.class);
+        int index = access.getIndex("methodWithManyArguments", String.class, float.class, Integer[].class, Float.class, SomeClass[].class,boolean.class);
         assertEquals(access.getIndex("methodWithManyArguments"), index);
     }
 
@@ -109,7 +109,7 @@ public class MethodAccessTest extends TestCase {
             this.bu=bu;
         }
 
-        public String methodWithManyArguments(int i, float f, Integer I, Float F, SomeClass c1, SomeClass c2, SomeClass c3) {
+        public String methodWithManyArguments(int i, float f, Integer[] I, Float F, SomeClass[] c1, Boolean x) {
             return "test";
         }
 
