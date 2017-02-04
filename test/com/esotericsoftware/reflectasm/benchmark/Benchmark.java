@@ -52,6 +52,6 @@ public class Benchmark {
         names.setLength(names.length() - 1);
         int height = count * 18 + 21;
         int width = Math.min(700, 300000 / height);
-        System.out.println("[img]http://chart.apis.google.com/chart?chtt=" + title + "&" + "chs=" + width + "x" + height + "&chd=t:" + times + "&chds=0," + max + "&chxl=0:|" + names + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666[/img]\n");
+        System.out.println("![](http://chart.apis.google.com/chart?chtt=" + title + "&" + "chs=" + width + "x" + height + "&chd=t:" + times + "&chds=0," + max + "&chxl=0:|" + names + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666)\n");
     }
 }

@@ -267,25 +267,26 @@ public class ClassAccess {
 
     private static void insertClassInfo(ClassInfo info, ClassWriter cw, String accessClassNameInternal, String classNameInternal) {
         final String baseName = "sun/reflect/MagicAccessorImpl";
+        final String clzInfoDesc=Type.getDescriptor(ClassInfo.class);
         cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, null, baseName, new String[]{accessorPath});
 
-        FieldVisitor fv = cw.visitField(0, "classInfo", "L" + classInfoPath + ";", null, null);
+        FieldVisitor fv = cw.visitField(0, "classInfo", clzInfoDesc, null, null);
 
         fv.visitEnd();
 
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()L" + classInfoPath + ";", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitInsn(ARETURN);
         mv.visitMaxs(1, 1);
         mv.visitEnd();
-        mv = cw.visitMethod(ACC_PUBLIC, "setInfo", "(L" + classInfoPath + ";)V", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC, "setInfo", "(" + clzInfoDesc + ")V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitInsn(RETURN);
         mv.visitMaxs(2, 2);
         mv.visitEnd();
@@ -300,7 +301,7 @@ public class ClassAccess {
         mv.visitTypeInsn(NEW, classInfoPath);
         mv.visitInsn(DUP);
         mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V", false);
-        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
 
         insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
         insertArray(mv, info.parameterTypes, "parameterTypes", accessClassNameInternal);
@@ -312,16 +313,16 @@ public class ClassAccess {
         insertArray(mv, info.constructorParameterTypes, "constructorParameterTypes", accessClassNameInternal);
         insertArray(mv, info.constructorModifiers, "constructorModifiers", accessClassNameInternal);
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitLdcInsn(Type.getType("L" + classNameInternal + ";"));
         mv.visitFieldInsn(PUTFIELD, classInfoPath, "baseClass", "Ljava/lang/Class;");
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitInsn(info.isNonStaticMemberClass ? ICONST_0 : ICONST_1);
         mv.visitFieldInsn(PUTFIELD, classInfoPath, "isNonStaticMemberClass", "Z");
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", "L" + classInfoPath + ";");
-        mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(L" + classInfoPath + ";)V", false);
+        mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
+        mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(" + clzInfoDesc + ")V", false);
 
         mv.visitInsn(RETURN);
         mv.visitMaxs(0, 0);

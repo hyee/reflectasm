@@ -1,11 +1,13 @@
 package com.esotericsoftware.reflectasm.benchmark;
 
+import com.esotericsoftware.reflectasm.ClassAccess;
 import com.esotericsoftware.reflectasm.MethodAccess;
 
 import java.lang.reflect.Method;
 
 public class MethodAccessBenchmark extends Benchmark {
     public MethodAccessBenchmark() throws Exception {
+        //ClassAccess.IS_STRICT_CONVET=true;
         int count = 300000;
         Object[] dontCompileMeAway = new Object[count];
         Object[] args = new Object[0];
