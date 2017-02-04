@@ -17,7 +17,6 @@ package com.esotericsoftware.reflectasm.util;
  */
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -70,42 +69,45 @@ public abstract class NumberUtils {
         STANDARD_NUMBER_TYPES = Collections.unmodifiableSet(numberTypes);
     }
 
-    private static <T> T convertOrGetDistance(Object from,Class toClass,boolean isGetDistance) {
-        if(from==null||toClass==null) return (T)(isGetDistance?Integer.valueOf(5):null);
+    private static <T> T convertOrGetDistance(Object from, Class toClass, boolean isGetDistance) {
+        if (from == null || toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
         Class clz;
-        if(!(from instanceof Class)) clz=from.getClass();
-        else clz=(Class) from;
+        if (!(from instanceof Class)) clz = from.getClass();
+        else clz = (Class) from;
 
-        if(clz==toClass||toClass.isAssignableFrom(clz)) return (T)(isGetDistance?Integer.valueOf(5):from);
-        if(toClass.isArray()&&clz.isArray()) {
-            int distance=5;
-            Object[] objects=(Object[])from;
-            Class<?> baseClass=toClass.getComponentType();
-            for(int i=0;i<objects.length;i++) {
-                if(isGetDistance) distance=Math.min(distance,convertOrGetDistance(objects[i],baseClass,true));
-                else objects[i]=convertOrGetDistance(objects[i],baseClass,false);
+        if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? Integer.valueOf(5) : from);
+        if (toClass.isArray() && clz.isArray()) {
+            int distance = 5;
+            Object[] objects = (Object[]) from;
+            Class<?> baseClass = toClass.getComponentType();
+            for (int i = 0; i < objects.length; i++) {
+                if (isGetDistance) distance = Math.min(distance, convertOrGetDistance(objects[i], baseClass, true));
+                else objects[i] = convertOrGetDistance(objects[i], baseClass, false);
             }
-            if(objects.length==0) {
-                if(from instanceof Class) from=new Class[0];
-                else from=Array.newInstance(baseClass,0);
+            if (objects.length == 0) {
+                if (from instanceof Class) from = new Class[0];
+                else from = Array.newInstance(baseClass, 0);
             }
-            return (T)(isGetDistance?distance:from);
+            return (T) (isGetDistance ? distance : from);
         }
-        if(toClass==String.class) return (T)(isGetDistance?Integer.valueOf(2):String.valueOf(from));
-        if(STANDARD_NUMBER_TYPES.contains(toClass)) {
-            if(STANDARD_NUMBER_TYPES.contains(clz)) return (T)(isGetDistance?Integer.valueOf(4):convertNumberToTargetClass((Number)from,toClass));
-            if(clz==String.class) return (T)(isGetDistance?Integer.valueOf(1):parseNumber((String) from,toClass));
+        if (toClass == String.class) return (T) (isGetDistance ? Integer.valueOf(2) : String.valueOf(from));
+        if (STANDARD_NUMBER_TYPES.contains(toClass)) {
+            if (STANDARD_NUMBER_TYPES.contains(clz))
+                return (T) (isGetDistance ? Integer.valueOf(4) : convertNumberToTargetClass((Number) from, toClass));
+            if (clz == String.class)
+                return (T) (isGetDistance ? Integer.valueOf(1) : parseNumber((String) from, toClass));
         }
-        return (T)(isGetDistance?Integer.valueOf(0):from);
+        return (T) (isGetDistance ? Integer.valueOf(0) : from);
     }
 
-    public static <T> T convert(Object from,Class toClass) {
-        return convertOrGetDistance(from,toClass,false);
+    public static <T> T convert(Object from, Class toClass) {
+        return convertOrGetDistance(from, toClass, false);
     }
 
-    public static int getDistance(Object from,Class toClass) {
-        return (Integer) convertOrGetDistance(from,toClass,true);
+    public static int getDistance(Object from, Class toClass) {
+        return (Integer) convertOrGetDistance(from, toClass, true);
     }
+
     /**
      * Convert the given number into an instance of the given target class.
      *
@@ -124,8 +126,7 @@ public abstract class NumberUtils {
      * @see java.math.BigDecimal
      */
     @SuppressWarnings("unchecked")
-    public static <T extends Number> T convertNumberToTargetClass(Number number, Class<T> targetClass)
-            throws IllegalArgumentException {
+    public static <T extends Number> T convertNumberToTargetClass(Number number, Class<T> targetClass) throws IllegalArgumentException {
         if (number == null) return null;
         Number to = null;
         if (targetClass.isInstance(number)) {
@@ -172,8 +173,7 @@ public abstract class NumberUtils {
             to = new BigDecimal(number.toString());
         }
         if (to == null) {
-            throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" +
-                    number.getClass().getName() + "] to unsupported target class [" + clz.getName() + "]");
+            throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" + number.getClass().getName() + "] to unsupported target class [" + clz.getName() + "]");
         }
         return (T) to;
     }
@@ -210,8 +210,7 @@ public abstract class NumberUtils {
      * @throws IllegalArgumentException if there is an overflow
      */
     private static void raiseOverflowException(Number number, Class<?> targetClass) {
-        throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" +
-                number.getClass().getName() + "] to target class [" + targetClass.getName() + "]: overflow");
+        throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" + number.getClass().getName() + "] to target class [" + targetClass.getName() + "]: overflow");
     }
 
     /**
@@ -238,9 +237,9 @@ public abstract class NumberUtils {
     public static <T extends Number> T parseNumber(String text, Class<T> targetClass) {
         if (text == null) return null;
         String trimmed = text.replace(" ", "");
-        if(trimmed.equals("")) return null;
-        Class clz=targetClass;
-        if(clz.isPrimitive()) clz=namePrimitiveMap.get(clz.getName());
+        if (trimmed.equals("")) return null;
+        Class clz = targetClass;
+        if (clz.isPrimitive()) clz = namePrimitiveMap.get(clz.getName());
         if (Byte.class == clz) {
             return (T) (isHexNumber(trimmed) ? Byte.decode(trimmed) : Byte.valueOf(trimmed));
         } else if (Short.class == clz) {
@@ -258,8 +257,7 @@ public abstract class NumberUtils {
         } else if (BigDecimal.class == clz || Number.class == clz) {
             return (T) new BigDecimal(trimmed);
         } else {
-            throw new IllegalArgumentException(
-                    "Cannot convert String [" + text + "] to target class [" + clz.getName() + "]");
+            throw new IllegalArgumentException("Cannot convert String [" + text + "] to target class [" + clz.getName() + "]");
         }
     }
 

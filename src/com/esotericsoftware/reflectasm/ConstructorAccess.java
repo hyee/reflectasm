@@ -31,6 +31,18 @@ public class ConstructorAccess<T> {
         return (T) accessor.newInstance();
     }
 
+    public int getIndex(Class... paramTypes) {
+        return classAccess.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
+    }
+
+    public T newInstance(int constructorIndex,Object ... args) {
+        return (T) classAccess.newInstance(constructorIndex,args);
+    }
+
+    public T newInstance(Object ... args) {
+        return (T) classAccess.newInstance(args);
+    }
+
     /**
      * Constructor for inner classes (non-static nested classes).
      *
