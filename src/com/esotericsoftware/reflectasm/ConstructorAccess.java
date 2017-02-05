@@ -3,8 +3,8 @@ package com.esotericsoftware.reflectasm;
 import java.lang.reflect.Constructor;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
-public class ConstructorAccess<T> {
-    public final ClassAccess accessor;
+public class ConstructorAccess<ANY> {
+    public final ClassAccess<ANY> accessor;
     public final ClassInfo classInfo;
 
     @Override
@@ -12,7 +12,7 @@ public class ConstructorAccess<T> {
         return accessor.toString();
     }
 
-    protected ConstructorAccess(ClassAccess accessor) {
+    protected ConstructorAccess(ClassAccess<ANY> accessor) {
         this.accessor = accessor;
         this.classInfo = accessor.getInfo();
     }
@@ -29,7 +29,7 @@ public class ConstructorAccess<T> {
         return accessor.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramCount);
     }
 
-    public int getIndex(Constructor<?> constructor) {
+    public int getIndex(Constructor<ANY> constructor) {
         return accessor.indexOfConstructor(constructor);
     }
 
@@ -41,24 +41,24 @@ public class ConstructorAccess<T> {
      * fron the enclosing instance.
      */
     @SuppressWarnings("unchecked")
-    public T newInstance() {
-        return (T) accessor.newInstance();
+    public ANY newInstance() {
+        return accessor.newInstance();
     }
 
-    public T newInstanceWithIndex(int constructorIndex, Object... args) {
-        return (T) accessor.newInstanceWithIndex(constructorIndex, args);
+    public ANY newInstanceWithIndex(int constructorIndex, Object... args) {
+        return accessor.newInstanceWithIndex(constructorIndex, args);
     }
 
-    public T newInstanceWithTypes(Class[] paramTypes, Object... args) {
-        return (T) accessor.newInstanceWithTypes(paramTypes, args);
+    public ANY newInstanceWithTypes(Class[] paramTypes, Object... args) {
+        return accessor.newInstanceWithTypes(paramTypes, args);
     }
 
-    public T newInstance(Object... args) {
-        return (T) accessor.newInstance(args);
+    public ANY newInstance(Object... args) {
+        return accessor.newInstance(args);
     }
 
-    static public <T> ConstructorAccess<T> get(Class<T> type, String... dumpFile) {
-        return new ConstructorAccess<T>(ClassAccess.get(type, dumpFile));
+    static public <ANY>ConstructorAccess get(Class<ANY> type, String... dumpFile) {
+        return new ConstructorAccess<ANY>(ClassAccess.get(type, dumpFile));
     }
 
 }

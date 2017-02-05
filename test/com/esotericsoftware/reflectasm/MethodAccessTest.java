@@ -12,7 +12,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvoke() {
-        MethodAccess access = MethodAccess.get(SomeClass.class, ".");
+        MethodAccess<SomeClass> access = MethodAccess.get(SomeClass.class, ".");
         SomeClass someObject = new SomeClass();
         Object value;
         value = access.invoke(someObject, "test");
@@ -51,7 +51,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        MethodAccess access = MethodAccess.get(EmptyClass.class,".");
+        MethodAccess<EmptyClass> access = MethodAccess.get(EmptyClass.class,".");
         try {
             access.getIndex("name");
             fail();
@@ -113,6 +113,18 @@ public class MethodAccessTest extends TestCase {
         private int intValue;
         static boolean bu;
         public static boolean x;
+
+        public SomeClass(){
+
+        }
+
+        public SomeClass(int x,int y){
+
+        }
+
+        public SomeClass(String x){
+
+        }
 
         public String getName() {
             return name;

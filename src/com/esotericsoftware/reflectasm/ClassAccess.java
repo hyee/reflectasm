@@ -16,12 +16,12 @@ import static java.lang.reflect.Modifier.isStatic;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond", "ConstantConditions", "Unsafe"})
-public class ClassAccess implements Accessor {
+public class ClassAccess<ANY> implements Accessor<ANY> {
     public final static int MODIFIER_VARARGS = 262144;
     public final static String CONSTRUCTOR_ALIAS = "<new>";
     public final static String CONSTRUCTOR_ALIAS_ESCAPE = "\3\2\1" + CONSTRUCTOR_ALIAS + "\1\2\3";
     public static String ACCESS_CLASS_PREFIX = "asm.";
-    public final Accessor accessor;
+    public final Accessor<ANY> accessor;
     private ClassInfo classInfo;
 
     public static boolean IS_CACHED = true;
@@ -91,7 +91,7 @@ public class ClassAccess implements Accessor {
      * @param dumpFile Optional to specify the path/directory to dump the reflection class over the target class
      * @return A dynamic object that wraps the target class
      */
-    public static ClassAccess get(Class type, String... dumpFile) {
+    public static <ANY>ClassAccess get(Class type, String... dumpFile) {
         String className = type.getName();
         final String accessClassName = ACCESS_CLASS_PREFIX + className;
         Class accessClass;
@@ -305,8 +305,8 @@ public class ClassAccess implements Accessor {
     private static void insertClassInfo(ClassInfo info, ClassWriter cw, String accessClassNameInternal, String classNameInternal) {
         final String baseName = "sun/reflect/MagicAccessorImpl";
         final String clzInfoDesc = Type.getDescriptor(ClassInfo.class);
-        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, null, baseName, new String[]{accessorPath});
-
+        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, "Ljava/lang/Object;L" + accessorPath + "<L" + classNameInternal + ";>;", baseName, new String[]{accessorPath});
+        //cw.visitInnerClass(classNameInternal, "com/esotericsoftware/reflectasm/MethodAccessTest", info.baseClass.getSimpleName(), ACC_PUBLIC + ACC_STATIC);
         FieldVisitor fv = cw.visitField(0, "classInfo", clzInfoDesc, null, null);
         fv.visitEnd();
 
@@ -374,28 +374,29 @@ public class ClassAccess implements Accessor {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
         insertClassInfo(info, cw, accessClassNameInternal, classNameInternal);
-        //***********************************************************************************************
-        // constructor access
-        insertNewInstance(cw, classNameInternal, info);
-        insertNewRawInstance(cw, classNameInternal);
 
         //***********************************************************************************************
         // method access
-        insertInvoke(cw, classNameInternal, methods);
+        insertInvoke(cw, classNameInternal, methods, accessClassNameInternal);
 
         //***********************************************************************************************
         // field access
-        insertGetObject(cw, classNameInternal, fields);
-        insertSetObject(cw, classNameInternal, fields);
+        insertGetObject(cw, classNameInternal, fields, accessClassNameInternal);
+        insertSetObject(cw, classNameInternal, fields, accessClassNameInternal);
+
+        //***********************************************************************************************
+        // constructor access
+        insertNewInstance(cw, classNameInternal, info, accessClassNameInternal);
+        insertNewRawInstance(cw, classNameInternal, accessClassNameInternal);
 
         cw.visitEnd();
         return cw.toByteArray();
     }
 
-    private static void insertNewRawInstance(ClassWriter cw, String classNameInternal) {
+    private static void insertNewRawInstance(ClassWriter cw, String classNameInternal, String accessClassNameInternal) {
         MethodVisitor mv;
         {
-            mv = cw.visitMethod(ACC_PUBLIC, "newInstance", "()Ljava/lang/Object;", null, null);
+            mv = cw.visitMethod(ACC_PUBLIC, "newInstance", "()L" + classNameInternal + ";", null, null);
             mv.visitCode();
             mv.visitTypeInsn(NEW, classNameInternal);
             mv.visitInsn(DUP);
@@ -404,11 +405,20 @@ public class ClassAccess implements Accessor {
             mv.visitMaxs(0, 0);
             mv.visitEnd();
         }
+        {
+            mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "newInstance", "()Ljava/lang/Object;", null, null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitMethodInsn(INVOKEVIRTUAL, accessClassNameInternal, "newInstance", "()L" + classNameInternal + ";");
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
     }
 
-    private static void insertNewInstance(ClassWriter cw, String classNameInternal, ClassInfo info) {
+    private static void insertNewInstance(ClassWriter cw, String classNameInternal, ClassInfo info, String accessClassNameInternal) {
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "newInstanceWithIndex", "(I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "newInstanceWithIndex", "(I[Ljava/lang/Object;)L" + classNameInternal + ";", null, null);
         mv.visitCode();
 
         int n = info.constructorModifiers.length;
@@ -462,11 +472,21 @@ public class ClassAccess implements Accessor {
         mv.visitInsn(ATHROW);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "newInstanceWithIndex", "(I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ILOAD, 1);
+        mv.visitVarInsn(ALOAD, 2);
+        mv.visitMethodInsn(INVOKEVIRTUAL, accessClassNameInternal, "newInstanceWithIndex", "(I[Ljava/lang/Object;)L" + classNameInternal + ";");
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(3, 3);
+        mv.visitEnd();
     }
 
-    private static void insertInvoke(ClassWriter cw, String classNameInternal, List<Method> methods) {
+    private static void insertInvoke(ClassWriter cw, String classNameInternal, List<Method> methods, String accessClassNameInternal) {
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "invoke", "(Ljava/lang/Object;I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "invoke", "(L" + classNameInternal + ";I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
         mv.visitCode();
 
         int n = methods.size();
@@ -491,7 +511,6 @@ public class ClassAccess implements Accessor {
 
                 if (!isStatic) {
                     mv.visitVarInsn(ALOAD, 1);
-                    mv.visitTypeInsn(CHECKCAST, classNameInternal);
                 }
 
                 buffer.setLength(0);
@@ -535,11 +554,23 @@ public class ClassAccess implements Accessor {
         mv.visitInsn(ATHROW);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "invoke", "(Ljava/lang/Object;I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitTypeInsn(CHECKCAST, classNameInternal);
+        mv.visitVarInsn(ILOAD, 2);
+        mv.visitVarInsn(ALOAD, 3);
+        mv.visitMethodInsn(INVOKEVIRTUAL, accessClassNameInternal, "invoke", "(L" + classNameInternal + ";I[Ljava/lang/Object;)Ljava/lang/Object;");
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(4, 4);
+        mv.visitEnd();
     }
 
-    static private void insertSetObject(ClassWriter cw, String classNameInternal, List<Field> fields) {
+    static private void insertSetObject(ClassWriter cw, String classNameInternal, List<Field> fields, String accessClassNameInternal) {
         int maxStack = 6;
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V", null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set", "(L" + classNameInternal + ";ILjava/lang/Object;)V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ILOAD, 2);
 
@@ -560,12 +591,10 @@ public class ClassAccess implements Accessor {
                 mv.visitFrame(F_SAME, 0, null, 0, null);
                 if (!st) {
                     mv.visitVarInsn(ALOAD, 1);
-                    mv.visitTypeInsn(CHECKCAST, classNameInternal);
                 }
                 mv.visitVarInsn(ALOAD, 3);
 
                 unbox(mv, fieldType);
-
                 mv.visitFieldInsn(st ? PUTSTATIC : PUTFIELD, classNameInternal, field.getName(), fieldType.getDescriptor());
                 mv.visitInsn(RETURN);
             }
@@ -576,11 +605,23 @@ public class ClassAccess implements Accessor {
         mv = insertThrowExceptionForFieldNotFound(mv);
         mv.visitMaxs(maxStack, 4);
         mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitTypeInsn(CHECKCAST, classNameInternal);
+        mv.visitVarInsn(ILOAD, 2);
+        mv.visitVarInsn(ALOAD, 3);
+        mv.visitMethodInsn(INVOKEVIRTUAL, accessClassNameInternal, "set", "(L" + classNameInternal + ";ILjava/lang/Object;)V");
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(4, 4);
+        mv.visitEnd();
     }
 
-    static private void insertGetObject(ClassWriter cw, String classNameInternal, List<Field> fields) {
+    static private void insertGetObject(ClassWriter cw, String classNameInternal, List<Field> fields, String accessClassNameInternal) {
         int maxStack = 6;
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;", null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get", "(L" + classNameInternal + ";I)Ljava/lang/Object;", null, null);
         mv.visitCode();
         mv.visitVarInsn(ILOAD, 2);
 
@@ -600,7 +641,6 @@ public class ClassAccess implements Accessor {
                     mv.visitFieldInsn(GETSTATIC, classNameInternal, field.getName(), Type.getDescriptor(field.getType()));
                 } else {
                     mv.visitVarInsn(ALOAD, 1);
-                    mv.visitTypeInsn(CHECKCAST, classNameInternal);
                     mv.visitFieldInsn(GETFIELD, classNameInternal, field.getName(), Type.getDescriptor(field.getType()));
                 }
                 Type fieldType = Type.getType(field.getType());
@@ -612,6 +652,17 @@ public class ClassAccess implements Accessor {
         }
         insertThrowExceptionForFieldNotFound(mv);
         mv.visitMaxs(maxStack, 3);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitTypeInsn(CHECKCAST, classNameInternal);
+        mv.visitVarInsn(ILOAD, 2);
+        mv.visitMethodInsn(INVOKEVIRTUAL, accessClassNameInternal, "get", "(L" + classNameInternal + ";I)Ljava/lang/Object;");
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(3, 3);
         mv.visitEnd();
     }
 
@@ -1000,7 +1051,7 @@ public class ClassAccess implements Accessor {
             throw new IllegalArgumentException(String.format("No such %s index in class \"%s\": %s",//
                     isNewInstance ? "constructor" : "method", classInfo.baseClass.getName(), e.getMessage()));
         }
-        return isNewInstance ? accessor.newInstanceWithIndex(methodIndex, arg) : accessor.invoke(instance, methodIndex, arg);
+        return isNewInstance ? accessor.newInstanceWithIndex(methodIndex, arg) : accessor.invoke((ANY)instance, methodIndex, arg);
     }
 
     public Object invoke(Object instance, String methodName, Object... args) {
@@ -1027,23 +1078,23 @@ public class ClassAccess implements Accessor {
         classInfo = info;
     }
 
-    public Object newInstance() {
+    public ANY newInstance() {
         return accessor.newInstance();
     }
 
-    public Object newInstanceWithIndex(int constructorIndex, Object... args) {
-        return invoke(CONSTRUCTOR_ALIAS_ESCAPE, constructorIndex, args);
+    public ANY newInstanceWithIndex(int constructorIndex, Object... args) {
+        return (ANY)invoke(CONSTRUCTOR_ALIAS_ESCAPE, constructorIndex, args);
     }
 
-    public Object newInstanceWithTypes(Class[] paramTypes, Object... args) {
-        return invokeWithTypes(CONSTRUCTOR_ALIAS_ESCAPE, ClassAccess.CONSTRUCTOR_ALIAS, paramTypes, args);
+    public ANY newInstanceWithTypes(Class[] paramTypes, Object... args) {
+        return (ANY)invokeWithTypes(CONSTRUCTOR_ALIAS_ESCAPE, ClassAccess.CONSTRUCTOR_ALIAS, paramTypes, args);
     }
 
-    public Object newInstance(Object... args) {
-        return invoke(CONSTRUCTOR_ALIAS_ESCAPE, CONSTRUCTOR_ALIAS, args);
+    public ANY newInstance(Object... args) {
+        return (ANY)invoke(CONSTRUCTOR_ALIAS_ESCAPE, CONSTRUCTOR_ALIAS, args);
     }
 
-    public void set(Object instance, int fieldIndex, Object value) {
+    public void set(ANY instance, int fieldIndex, Object value) {
         if (IS_STRICT_CONVERT) try {
             value = convert(value, classInfo.fieldTypes[fieldIndex]);
         } catch (Exception e) {
@@ -1053,51 +1104,51 @@ public class ClassAccess implements Accessor {
         accessor.set(instance, fieldIndex, value);
     }
 
-    public void set(Object instance, String fieldName, Object value) {
+    public void set(ANY instance, String fieldName, Object value) {
         set(instance, indexOfField(fieldName), value);
     }
 
-    public void setBoolean(Object instance, int fieldIndex, boolean value) {
+    public void setBoolean(ANY instance, int fieldIndex, boolean value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setByte(Object instance, int fieldIndex, byte value) {
+    public void setByte(ANY instance, int fieldIndex, byte value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setShort(Object instance, int fieldIndex, short value) {
+    public void setShort(ANY instance, int fieldIndex, short value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setInt(Object instance, int fieldIndex, int value) {
+    public void setInt(ANY instance, int fieldIndex, int value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setLong(Object instance, int fieldIndex, long value) {
+    public void setLong(ANY instance, int fieldIndex, long value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setDouble(Object instance, int fieldIndex, double value) {
+    public void setDouble(ANY instance, int fieldIndex, double value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setFloat(Object instance, int fieldIndex, float value) {
+    public void setFloat(ANY instance, int fieldIndex, float value) {
         set(instance, fieldIndex, value);
     }
 
-    public void setChar(Object instance, int fieldIndex, char value) {
+    public void setChar(ANY instance, int fieldIndex, char value) {
         set(instance, fieldIndex, value);
     }
 
-    public Object get(Object instance, int fieldIndex) {
+    public Object get(ANY instance, int fieldIndex) {
         return accessor.get(instance, fieldIndex);
     }
 
-    public Object get(Object instance, String fieldName) {
+    public Object get(ANY instance, String fieldName) {
         return accessor.get(instance, indexOfField(fieldName));
     }
 
-    public <T> T get(Object instance, int fieldIndex, Class<T> clz) {
+    public <T> T get(ANY instance, int fieldIndex, Class<T> clz) {
         Object value = accessor.get(instance, fieldIndex);
         if (IS_STRICT_CONVERT) try {
             value = convert(value, clz);
@@ -1107,39 +1158,39 @@ public class ClassAccess implements Accessor {
         return (T) value;
     }
 
-    public <T> T get(Object instance, String fieldName, Class<T> clz) {
+    public <T> T get(ANY instance, String fieldName, Class<T> clz) {
         return get(instance, indexOfField(fieldName), clz);
     }
 
-    public char getChar(Object instance, int fieldIndex) {
+    public char getChar(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, char.class);
     }
 
-    public boolean getBoolean(Object instance, int fieldIndex) {
+    public boolean getBoolean(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, boolean.class);
     }
 
-    public byte getByte(Object instance, int fieldIndex) {
+    public byte getByte(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, byte.class);
     }
 
-    public short getShort(Object instance, int fieldIndex) {
+    public short getShort(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, short.class);
     }
 
-    public int getInt(Object instance, int fieldIndex) {
+    public int getInt(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, int.class);
     }
 
-    public long getLong(Object instance, int fieldIndex) {
+    public long getLong(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, long.class);
     }
 
-    public double getDouble(Object instance, int fieldIndex) {
+    public double getDouble(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, double.class);
     }
 
-    public float getFloat(Object instance, int fieldIndex) {
+    public float getFloat(ANY instance, int fieldIndex) {
         return get(instance, fieldIndex, float.class);
     }
 

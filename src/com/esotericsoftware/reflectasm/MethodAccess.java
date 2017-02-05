@@ -3,8 +3,8 @@ package com.esotericsoftware.reflectasm;
 import java.lang.reflect.Method;
 
 @SuppressWarnings("UnusedDeclaration")
-public class MethodAccess {
-    public final ClassAccess accessor;
+public class MethodAccess<ANY> {
+    public final ClassAccess<ANY> accessor;
     public final ClassInfo classInfo;
 
     @Override
@@ -12,26 +12,26 @@ public class MethodAccess {
         return accessor.toString();
     }
 
-    protected MethodAccess(ClassAccess accessor) {
+    protected MethodAccess(ClassAccess<ANY> accessor) {
         this.accessor = accessor;
         this.classInfo = accessor.getInfo();
     }
 
-    public Object invoke(Object object, int methodIndex, Object... args) {
+    public Object invoke(ANY object, int methodIndex, Object... args) {
         return accessor.invoke(object, methodIndex, args);
     }
 
     /**
      * Invokes the method with the specified name and the specified param types.
      */
-    public Object invokeWithTypes(Object object, String methodName, Class[] paramTypes, Object... args) {
+    public Object invokeWithTypes(ANY object, String methodName, Class[] paramTypes, Object... args) {
         return accessor.invokeWithTypes(object, methodName, paramTypes, args);
     }
 
     /**
      * Invokes the first method with the specified name and the specified number of arguments.
      */
-    public Object invoke(Object object, String methodName, Object... args) {
+    public Object invoke(ANY object, String methodName, Object... args) {
         return accessor.invoke(object, methodName, args);
     }
 
@@ -72,7 +72,7 @@ public class MethodAccess {
         return accessor.getReturnTypes();
     }
 
-    static public MethodAccess get(Class type, String... dumpFile) {
+    static public <ANY>MethodAccess get(Class<ANY> type, String... dumpFile) {
         return new MethodAccess(ClassAccess.get(type, dumpFile));
     }
 }

@@ -17,7 +17,7 @@ import junit.framework.TestCase;
 
 public class FieldAccessTest extends TestCase {
     public void testNameSetAndGet() {
-        FieldAccess access = FieldAccess.get(SomeClass.class);
+        FieldAccess<SomeClass> access = FieldAccess.get(SomeClass.class);
         SomeClass test = new SomeClass();
 
         assertEquals(null, test.name);
