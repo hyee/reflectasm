@@ -1,8 +1,8 @@
 package com.esotericsoftware.reflectasm;
 
-import com.esotericsoftware.reflectasm.util.NumberUtils;
 import junit.framework.TestCase;
 
+import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -11,7 +11,7 @@ public class MethodAccessTest extends TestCase {
         MethodAccess access = MethodAccess.get(SomeClass.class, ".");
         SomeClass someObject = new SomeClass();
         Object value;
-
+        value = access.invoke(someObject, "test");
         value = access.invoke(someObject, "getName");
         assertEquals(null, value);
         value = access.invoke(someObject, "setName", "sweet");
@@ -25,15 +25,25 @@ public class MethodAccessTest extends TestCase {
 
         value = access.invoke(someObject, "getIntValue");
         assertEquals(0, value);
-        value = access.invoke(someObject, "setValue", 1234,false);
+        value = access.invoke(someObject, "setValue", 1234, false);
         assertEquals(null, value);
         value = access.invoke(someObject, "getIntValue");
         assertEquals(1234, value);
-        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3,4}, 4.2f, null,true);
-        assertEquals("test", value);
-
-        int index = access.getIndex("methodWithManyArguments", String.class, float.class, Integer[].class, Float.class, SomeClass[].class,boolean.class);
-        assertEquals(access.getIndex("methodWithManyArguments"), index);
+        value = access.invoke(someObject, "methodWithManyArguments", 6, 2f,null);
+        assertEquals("test0", value);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true);
+        assertEquals("test1", value);
+        value = access.invoke(null, "staticMethod", "moo", 1234);
+        assertEquals("meow! moo, 1234", value);
+        //int methodWithVarArgs(char,Double,Long,Integer[])
+        value = access.invoke(someObject, "methodWithVarArgs", 1,2,3);
+        assertEquals(0, value);
+        value = access.invoke(someObject, "methodWithVarArgs", null,2,3,4);
+        assertEquals(1, value);
+        value = access.invoke(someObject, "methodWithVarArgs", "B",null,3,4,null);
+        assertEquals(2, value);
+        value = access.invoke(someObject, "methodWithVarArgs", new BigDecimal(1),2,new BigDecimal(20),new Integer[2]);
+        assertEquals(2, value);
     }
 
     public void testEmptyClass() {
@@ -71,7 +81,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvokeInterface() {
-        MethodAccess access = MethodAccess.get(ConcurrentMap.class, ".");
+        MethodAccess access = MethodAccess.get(ConcurrentMap.class);
         ConcurrentHashMap<String, String> someMap = new ConcurrentHashMap<String, String>();
         someMap.put("first", "one");
         someMap.put("second", "two");
@@ -85,9 +95,16 @@ public class MethodAccessTest extends TestCase {
         assertEquals(someMap.size(), value);
     }
 
-    static public class EmptyClass {}
+    static public class EmptyClass {
 
-    static public class SomeClass {
+    }
+
+    static public class baseClass extends EmptyClass {
+        public void test() {}
+
+    }
+
+    static public class SomeClass extends baseClass {
         private String name;
         private int intValue;
         static boolean bu;
@@ -104,14 +121,25 @@ public class MethodAccessTest extends TestCase {
             return intValue;
         }
 
-        public void setValue(int intValue,Boolean bu) {
+        public void setValue(int intValue, Boolean bu) {
             this.intValue = intValue;
-            this.bu=bu;
+            this.bu = bu;
         }
 
-        public String methodWithManyArguments(int i, float f, Integer[] I, Float F, SomeClass[] c1, Boolean x) {
-            return "test";
+        public String methodWithManyArguments(int i, float f, Integer[] I, SomeClass[] c1) {
+            return "test0";
         }
 
+        public String methodWithManyArguments(int i, float f, Integer[] I, Float F, SomeClass[] c1, Boolean x, int... y) {
+            return "test1";
+        }
+
+        public int methodWithVarArgs(char a,Double b,Long c,Integer ... d) {
+            return d.length;
+        }
+
+        static public String staticMethod(String a, int b) {
+            return "meow! " + a + ", " + b;
+        }
     }
 }

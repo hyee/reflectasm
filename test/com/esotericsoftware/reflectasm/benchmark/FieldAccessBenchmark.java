@@ -5,8 +5,10 @@ import com.esotericsoftware.reflectasm.FieldAccess;
 import java.lang.reflect.Field;
 
 public class FieldAccessBenchmark extends Benchmark {
+    public static String[] result;
+
     public FieldAccessBenchmark() throws Exception {
-        int count = 300000;
+        int count = Benchmark.testRounds;
         Object[] dontCompileMeAway = new Object[count];
 
         FieldAccess access = FieldAccess.get(SomeClass.class);
@@ -15,7 +17,7 @@ public class FieldAccessBenchmark extends Benchmark {
 
         Field field = SomeClass.class.getField("name");
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++) {
                 access.set(someObject, index, "first");
                 dontCompileMeAway[ii] = access.get(someObject, index);
@@ -27,30 +29,30 @@ public class FieldAccessBenchmark extends Benchmark {
         }
         warmup = false;
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++) {
                 access.set(someObject, index, "first");
                 dontCompileMeAway[ii] = access.get(someObject, index);
             }
         }
-        end("FieldAccess");
+        end("Field Set+Get - ReflectASM");
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++) {
                 field.set(someObject, "first");
                 dontCompileMeAway[ii] = field.get(someObject);
             }
         }
-        end("Reflection");
+        end("Field Set+Get - Reflection");
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++) {
                 someObject.name = "first";
                 dontCompileMeAway[ii] = someObject.name;
             }
         }
-        end("Direct");
-        chart("Field Set/Get");
+        end("Field Set+Get - Direct");
+        result = chart("Field Set/Get");
     }
 
     static public class SomeClass {

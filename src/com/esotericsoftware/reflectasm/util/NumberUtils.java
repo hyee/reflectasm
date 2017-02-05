@@ -78,11 +78,13 @@ public abstract class NumberUtils {
         if (toClass.isArray() && clz.isArray()) {
             int distance = 5;
             Class<?> baseClass = toClass.getComponentType();
-            Object objects=null;
-            if(!isGetDistance) objects=Array.newInstance(baseClass,Array.getLength(from));
+            if (from instanceof Class) return convertOrGetDistance(clz.getComponentType(), baseClass, isGetDistance);
+            Object objects = null;
+            if (!isGetDistance) objects = Array.newInstance(baseClass, Array.getLength(from));
             for (int i = 0; i < Array.getLength(from); i++) {
-                if (isGetDistance) distance = Math.min(distance, convertOrGetDistance(Array.get(from,i), baseClass, true));
-                else Array.set(objects,i,convertOrGetDistance(Array.get(from,i), baseClass, false));
+                if (isGetDistance)
+                    distance = Math.min(distance, convertOrGetDistance(Array.get(from, i), baseClass, true));
+                else Array.set(objects, i, convertOrGetDistance(Array.get(from, i), baseClass, false));
             }
             return (T) (isGetDistance ? distance : objects);
         }
@@ -93,10 +95,10 @@ public abstract class NumberUtils {
             if (clz == String.class)
                 return (T) (isGetDistance ? Integer.valueOf(1) : parseNumber((String) from, toClass));
         }
-        if(namePrimitiveMap.containsKey(toClass.getName())&&namePrimitiveMap.get(toClass.getName())==clz) {
+        if (namePrimitiveMap.containsKey(toClass.getName()) && namePrimitiveMap.get(toClass.getName()) == clz) {
             return (T) (isGetDistance ? Integer.valueOf(5) : from);
         }
-        if(namePrimitiveMap.containsKey(clz.getName())&&namePrimitiveMap.get(clz.getName())==toClass) {
+        if (namePrimitiveMap.containsKey(clz.getName()) && namePrimitiveMap.get(clz.getName()) == toClass) {
             return (T) (isGetDistance ? Integer.valueOf(5) : from);
         }
         return (T) (isGetDistance ? Integer.valueOf(0) : toClass.cast(from));

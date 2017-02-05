@@ -11,33 +11,40 @@ This is the revised version, some differences from `EsotericSoftware/reflectasm`
 * Provides the caching options for performance purpose(default as enabled)
 * Optimize some logics for performance purpose
 * Auto data type conversion for invoking or construction
-* Accuratly position the closest method for overloading  
+* Accuratly position the closest method for overloading
+* Supports methods/constructors with variable parameters
+* Removes the harcodes of the package name
+
+To support Java 7, just need to change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
 
 ## Overview
 
 ReflectASM is a very small Java library that provides high performance reflection by using code generation. An access class is generated to set/get fields, call methods, or create a new instance. The access class uses bytecode rather than Java's reflection, so it is much faster. It can also access primitive fields via bytecode to avoid boxing.
 
 ## Performance
-Test OS : Win10 x64<br/>
-Test JVM: Java 8u112 x86
+Test OS: Win10 x64<br/>
+Test VM: Java 1.8u112 x86<br/>
+The source code for these benchmarks are included in the project. 
+
+#### Summary(Smaller value means better performane)
+
+| VM | Item | Direct | ReflectASM | Reflection |
+| --- | --- |  ---------  |  ---------  |  ---------  |
+| Server VM | Field Set+Get | 37.0 | 284.0 | 431.0 |
+| Server VM | Method Call | 23.0 | 137.0 | 162.0 |
+| Server VM | Constructor | 149.0 | 217.0 | 301.0 |
+| Client VM | Field Set+Get | 83.0 | 325.0 | 6273.0 |
+| Client VM | Method Call | 66.0 | 197.0 | 1483.0 |
+| Client VM | Constructor | 2084.0 | 2142.0 | 4615.0 |
+
 #### Server VM
-
-![](http://chart.apis.google.com/chart?chtt=Method Call&chs=700x75&chd=t:25212544,139758792,181607250&chds=0,181607250&chxl=0:|Reflection|MethodAccess|Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
-![](http://chart.apis.google.com/chart?chtt=Field Set/Get&chs=700x75&chd=t:34999471,404592751,426401708&chds=0,426401708&chxl=0:|FieldAccess|Reflection|Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
-![](http://chart.apis.google.com/chart?chtt=Constructor&chs=700x75&chd=t:155610141,262694270,282406869&chds=0,282406869&chxl=0:|Reflection|ConstructorAccess|Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:37764458,284405915,431107964,23479961,137938401,162971148,149643410,217206550,301078702&chds=0,431107964&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 #### Client VM
-
-![](http://chart.apis.google.com/chart?chtt=Method Call&chs=700x75&chd=t:67050358,191822572,1501951152&chds=0,1501951152&chxl=0:|Reflection|MethodAccess|Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
-![](http://chart.apis.google.com/chart?chtt=Field Set/Get&chs=700x75&chd=t:81317752,321833969,6215017823&chds=0,6215017823&chxl=0:|Reflection|FieldAccess|Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
-![](http://chart.apis.google.com/chart?chtt=Constructor&chs=700x75&chd=t:4716682366,2100766928,2131200029&chds=0,4716682366&chxl=0:|ConstructorAccess|Direct|Reflection&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:83360132,325777324,6273470647,66804042,197249533,1483146277,4615079935,2084145078,2142319655&chds=0,6273470647&chxl=0:|Constructor - ReflectASM|Constructor - Direct|Constructor - Reflection|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 
-The source code for these benchmarks is included in the project. 
+
 
 ## Usage
 

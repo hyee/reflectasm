@@ -104,7 +104,6 @@ public class ClassLoaderTest extends TestCase {
 
     static public class Test {
         public String name;
-
         public String toString() {
             return name;
         }

@@ -3,7 +3,7 @@ package com.esotericsoftware.reflectasm;
 @SuppressWarnings("UnusedDeclaration")
 public class MethodAccess {
     public final ClassAccess classAccess;
-    public final ClassAccess.Accessor accessor;
+    public final Accessor accessor;
 
     @Override
     public String toString() {

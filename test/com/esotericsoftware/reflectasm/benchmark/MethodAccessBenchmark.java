@@ -1,14 +1,15 @@
 package com.esotericsoftware.reflectasm.benchmark;
 
-import com.esotericsoftware.reflectasm.ClassAccess;
 import com.esotericsoftware.reflectasm.MethodAccess;
 
 import java.lang.reflect.Method;
 
 public class MethodAccessBenchmark extends Benchmark {
+    public static String[] result;
+
     public MethodAccessBenchmark() throws Exception {
-        //ClassAccess.IS_STRICT_CONVET=true;
-        int count = 300000;
+        //ClassAccess.IS_STRICT_CONVERT=true;
+        int count = Benchmark.testRounds;
         Object[] dontCompileMeAway = new Object[count];
         Object[] args = new Object[0];
 
@@ -19,7 +20,7 @@ public class MethodAccessBenchmark extends Benchmark {
         Method method = SomeClass.class.getMethod("getName");
         // method.setAccessible(true); // Improves reflection a bit.
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.invoke(someObject, index, args);
             for (int ii = 0; ii < count; ii++)
@@ -27,26 +28,26 @@ public class MethodAccessBenchmark extends Benchmark {
         }
         warmup = false;
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.invoke(someObject, index, args);
         }
-        end("MethodAccess");
+        end("Method Call - ReflectASM");
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = method.invoke(someObject, args);
 
         }
-        end("Reflection");
+        end("Method Call - Reflection");
         start();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < Benchmark.testCount; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = someObject.getName();
 
         }
-        end("Direct");
-        chart("Method Call");
+        end("Method Call - Direct");
+        result = chart("Method Call");
     }
 
     static public class SomeClass {

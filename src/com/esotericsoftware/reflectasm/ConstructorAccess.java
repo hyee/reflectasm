@@ -3,7 +3,7 @@ package com.esotericsoftware.reflectasm;
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<T> {
     public final ClassAccess classAccess;
-    public final ClassAccess.Accessor accessor;
+    public final Accessor accessor;
 
     @Override
     public String toString() {

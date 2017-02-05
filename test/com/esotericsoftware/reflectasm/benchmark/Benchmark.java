@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 public class Benchmark {
     public boolean warmup = true;
     public HashMap<String, Long> testTimes = new HashMap();
+    static int testRounds = 300000;
+    static int testCount = 100;
     private long s;
 
     public void start() {
@@ -19,12 +21,16 @@ public class Benchmark {
         if (warmup) return;
         long e = System.nanoTime();
         long time = e - s;
+        /*
+        if(System.getProperty("java.vm.name").indexOf("Server VM")>-1) name="ServerVM["+name+"]";
+        else name="ClientVM["+name+"]";
+        */
         Long oldTime = testTimes.get(name);
         if (oldTime == null || time < oldTime) testTimes.put(name, time);
         System.out.println(name + ": " + time / 1000000f + " ms");
     }
 
-    public void chart(String title) {
+    public String[] chart(String title) {
         Comparator<Entry> comparator = new Comparator<Entry>() {
             public int compare(Entry o1, Entry o2) {
                 // return ((String)o1.getKey()).compareTo((String)o2.getKey());
@@ -53,5 +59,6 @@ public class Benchmark {
         int height = count * 18 + 21;
         int width = Math.min(700, 300000 / height);
         System.out.println("![](http://chart.apis.google.com/chart?chtt=" + title + "&" + "chs=" + width + "x" + height + "&chd=t:" + times + "&chds=0," + max + "&chxl=0:|" + names + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666)\n");
+        return new String[]{times.toString(), String.valueOf(max), names.toString()};
     }
 }
