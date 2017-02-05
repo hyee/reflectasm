@@ -75,7 +75,7 @@ Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAcces
 
 | ClassAccess.*method* | Equivalent | Discription |
 | -------------------- | ---------- | ----------- | 
-| get(Class) | (F/M/C).get | returns a wrapper object of the underlying class |
+| *static* get(Class,[dump dir]) | (F/M/C).get | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
 | IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
 | IndexOf(name,type)| | returns the first element of `IndexesOf`|
 | IndexOfField(String/Field) | F.getIndex | returns the field index that matches the given input|
@@ -93,6 +93,13 @@ Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAcces
 | newInstance({args}) | C.newInstance | Create underlying Object |
 | newInstanceWithIndex(index,{args}) | C.newInstanceWithIndex | Create underlying Object with the specific constructor index|
 | newInstanceWithTypes({argTypes},{args}) | C.newInstanceWithTypes | Create underlying Object by specifying parameter types in order to position the accurate constructor|
+| getInfo/setInfo || Get/set the underlying `ClassInfo`|
+
+
+Other static fields:
+* `ClassAccess.ACCESS_CLASS_PREFIX`: the prefix of the dynamic class name(format is `<prefix>.<underlying_class_full_name>`), the default value is `asm.`
+* `ClassAccess.IS_CACHED`: The option to cache the method/constructor indexes and the dynamic classes, default is `true`. VM parameter `reflectasm.is_cache` can also control this option
+* `ClassAccess.IS_STRICT_CONVERT`: controls the auto-conversion of the input arguments for the invoke/set/constructor functions, i.e., auto-cast `String` into `int` when a method only accepts the `int` parameter. Default is `false`(enabled conversion), and VM parameter `reflectasm.is_strict_convert` can also control this option
 
 ## Avoiding Name Lookup
 
