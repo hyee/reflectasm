@@ -73,7 +73,7 @@ public abstract class NumberUtils {
         //return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
         if (from == null)
-            return (T) (isGetDistance ? Integer.valueOf(namePrimitiveMap.containsKey(toClass.getName()) ? 0 : 5) : null);
+            return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? 0 : 5) : null);
         Class clz;
         boolean isClass = false;
         if (!(from instanceof Class)) clz = from.getClass();

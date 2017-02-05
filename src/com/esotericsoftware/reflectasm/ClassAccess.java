@@ -286,7 +286,7 @@ public class ClassAccess implements Accessor {
                 mv.visitLdcInsn((String) array[i]);
             } else {
                 mv.visitIntInsn(SIPUSH, (Integer) array[i]);
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
             }
             mv.visitInsn(AASTORE);
         }
@@ -311,6 +311,7 @@ public class ClassAccess implements Accessor {
         fv.visitEnd();
 
         MethodVisitor mv;
+
         mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
@@ -318,6 +319,7 @@ public class ClassAccess implements Accessor {
         mv.visitInsn(ARETURN);
         mv.visitMaxs(1, 1);
         mv.visitEnd();
+
         mv = cw.visitMethod(ACC_PUBLIC, "setInfo", "(" + clzInfoDesc + ")V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
@@ -336,7 +338,7 @@ public class ClassAccess implements Accessor {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitTypeInsn(NEW, classInfoPath);
         mv.visitInsn(DUP);
-        mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V", false);
+        mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V");
         mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
 
         insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
@@ -348,14 +350,17 @@ public class ClassAccess implements Accessor {
         insertArray(mv, info.fieldModifiers, "fieldModifiers", accessClassNameInternal);
         insertArray(mv, info.constructorParamTypes, "constructorParamTypes", accessClassNameInternal);
         insertArray(mv, info.constructorModifiers, "constructorModifiers", accessClassNameInternal);
+
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitLdcInsn(Type.getType(info.baseClass));
         mv.visitFieldInsn(PUTFIELD, classInfoPath, "baseClass", "Ljava/lang/Class;");
+
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitInsn(info.isNonStaticMemberClass ? ICONST_0 : ICONST_1);
         mv.visitFieldInsn(PUTFIELD, classInfoPath, "isNonStaticMemberClass", "Z");
+
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(" + clzInfoDesc + ")V", false);
@@ -385,7 +390,6 @@ public class ClassAccess implements Accessor {
 
         cw.visitEnd();
         return cw.toByteArray();
-
     }
 
     private static void insertNewRawInstance(ClassWriter cw, String classNameInternal) {
@@ -431,10 +435,10 @@ public class ClassAccess implements Accessor {
 
                 Class[] paramTypes = info.constructorParamTypes[i];
                 for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
+                    Type paramType = Type.getType(paramTypes[paramIndex]);
                     mv.visitVarInsn(ALOAD, 2);
                     mv.visitIntInsn(BIPUSH, paramIndex);
                     mv.visitInsn(AALOAD);
-                    Type paramType = Type.getType(paramTypes[paramIndex]);
                     unbox(mv, paramType);
                     buffer.append(paramType.getDescriptor());
                 }

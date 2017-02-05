@@ -51,7 +51,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        MethodAccess access = MethodAccess.get(EmptyClass.class);
+        MethodAccess access = MethodAccess.get(EmptyClass.class,".");
         try {
             access.getIndex("name");
             fail();
@@ -109,9 +109,10 @@ public class MethodAccessTest extends TestCase {
     }
 
     static public class SomeClass extends baseClass {
-        private String name;
+        String name;
         private int intValue;
         static boolean bu;
+        public static boolean x;
 
         public String getName() {
             return name;
