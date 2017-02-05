@@ -2,41 +2,41 @@ package com.esotericsoftware.reflectasm;
 
 @SuppressWarnings("UnusedDeclaration")
 public class FieldAccess {
-    public final ClassAccess classAccess;
-    public final Accessor accessor;
+    public final ClassAccess accessor;
+    public final ClassInfo classInfo;
 
     @Override
     public String toString() {
-        return classAccess.toString();
+        return accessor.toString();
     }
 
-    protected FieldAccess(ClassAccess classAccess) {
-        this.classAccess = classAccess;
-        accessor = classAccess.accessor;
+    protected FieldAccess(ClassAccess accessor) {
+        this.accessor = accessor;
+        this.classInfo = accessor.getInfo();
     }
 
     public int getIndex(String fieldName) {
-        return classAccess.indexOfField(fieldName);
+        return accessor.indexOfField(fieldName);
     }
 
     public void set(Object instance, String fieldName, Object value) {
-        set(instance, getIndex(fieldName), value);
+        accessor.set(instance, fieldName, value);
     }
 
     public Object get(Object instance, String fieldName) {
-        return get(instance, getIndex(fieldName));
+        return accessor.get(instance, fieldName);
     }
 
     public String[] getFieldNames() {
-        return classAccess.getFieldNames();
+        return accessor.getFieldNames();
     }
 
     public Class[] getFieldTypes() {
-        return classAccess.getFieldTypes();
+        return accessor.getFieldTypes();
     }
 
     public int getFieldCount() {
-        return classAccess.getFieldCount();
+        return accessor.getFieldCount();
     }
 
     public void set(Object instance, int fieldIndex, Object value) {
@@ -44,35 +44,35 @@ public class FieldAccess {
     }
 
     public void setBoolean(Object instance, int fieldIndex, boolean value) {
-        classAccess.setBoolean(instance, fieldIndex, value);
+        accessor.setBoolean(instance, fieldIndex, value);
     }
 
     public void setByte(Object instance, int fieldIndex, byte value) {
-        classAccess.setByte(instance, fieldIndex, value);
+        accessor.setByte(instance, fieldIndex, value);
     }
 
     public void setShort(Object instance, int fieldIndex, short value) {
-        classAccess.setShort(instance, fieldIndex, value);
+        accessor.setShort(instance, fieldIndex, value);
     }
 
     public void setInt(Object instance, int fieldIndex, int value) {
-        classAccess.setInt(instance, fieldIndex, value);
+        accessor.setInt(instance, fieldIndex, value);
     }
 
     public void setLong(Object instance, int fieldIndex, long value) {
-        classAccess.setLong(instance, fieldIndex, value);
+        accessor.setLong(instance, fieldIndex, value);
     }
 
     public void setDouble(Object instance, int fieldIndex, double value) {
-        classAccess.setDouble(instance, fieldIndex, value);
+        accessor.setDouble(instance, fieldIndex, value);
     }
 
     public void setFloat(Object instance, int fieldIndex, float value) {
-        classAccess.setFloat(instance, fieldIndex, value);
+        accessor.setFloat(instance, fieldIndex, value);
     }
 
     public void setChar(Object instance, int fieldIndex, char value) {
-        classAccess.setChar(instance, fieldIndex, value);
+        accessor.setChar(instance, fieldIndex, value);
     }
 
     public Object get(Object instance, int fieldIndex) {
@@ -80,39 +80,43 @@ public class FieldAccess {
     }
 
     public <T> T get(Object instance, int fieldIndex, Class<T> clz) {
-        return (T) (classAccess.get(instance, fieldIndex, clz));
+        return (T) (accessor.get(instance, fieldIndex, clz));
+    }
+
+    public <T> T get(Object instance, String fieldName, Class<T> clz) {
+        return (T) (accessor.get(instance, fieldName, clz));
     }
 
     public char getChar(Object instance, int fieldIndex) {
-        return classAccess.getChar(instance, fieldIndex);
+        return accessor.getChar(instance, fieldIndex);
     }
 
     public boolean getBoolean(Object instance, int fieldIndex) {
-        return classAccess.getBoolean(instance, fieldIndex);
+        return accessor.getBoolean(instance, fieldIndex);
     }
 
     public byte getByte(Object instance, int fieldIndex) {
-        return classAccess.getByte(instance, fieldIndex);
+        return accessor.getByte(instance, fieldIndex);
     }
 
     public short getShort(Object instance, int fieldIndex) {
-        return classAccess.getShort(instance, fieldIndex);
+        return accessor.getShort(instance, fieldIndex);
     }
 
     public int getInt(Object instance, int fieldIndex) {
-        return classAccess.getInt(instance, fieldIndex);
+        return accessor.getInt(instance, fieldIndex);
     }
 
     public long getLong(Object instance, int fieldIndex) {
-        return classAccess.getLong(instance, fieldIndex);
+        return accessor.getLong(instance, fieldIndex);
     }
 
     public double getDouble(Object instance, int fieldIndex) {
-        return classAccess.getDouble(instance, fieldIndex);
+        return accessor.getDouble(instance, fieldIndex);
     }
 
     public float getFloat(Object instance, int fieldIndex) {
-        return classAccess.getFloat(instance, fieldIndex);
+        return accessor.getFloat(instance, fieldIndex);
     }
 
     public String getString(Object instance, int fieldIndex) {

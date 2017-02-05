@@ -39,7 +39,7 @@ public class ClassLoaderTest extends TestCase {
         assertEquals("second", access2.get(testObject2, "name"));
 
         assertEquals(access1.accessor.getClass().toString(), access2.accessor.getClass().toString()); // Same class names
-        assertFalse(access1.accessor.getClass().equals(access2.accessor.getClass())); // But different classes
+        assertFalse(access1.accessor.accessor.getClass().equals(access2.accessor.accessor.getClass())); // But different classes
 
         assertEquals(initialCount + 2, AccessClassLoader.activeAccessClassLoaders());
 
@@ -89,8 +89,8 @@ public class ClassLoaderTest extends TestCase {
         assertEquals("second", testObject2.toString());
         assertEquals("second", access2.get(testObject2, "name"));
 
-        assertEquals(access1.accessor.getClass().toString(), access2.accessor.getClass().toString()); // Same class names
-        assertFalse(access1.accessor.getClass().equals(access2.accessor.getClass())); // But different classes
+        assertEquals(access1.accessor.accessor.getClass().toString(), access2.accessor.accessor.getClass().toString()); // Same class names
+        assertFalse(access1.accessor.accessor.getClass().equals(access2.accessor.accessor.getClass())); // But different classes
 
         assertEquals(initialCount + 2, AccessClassLoader.activeAccessClassLoaders());
 
@@ -104,6 +104,7 @@ public class ClassLoaderTest extends TestCase {
 
     static public class Test {
         public String name;
+
         public String toString() {
             return name;
         }

@@ -7,8 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class MethodAccessTest extends TestCase {
+    public void abc(char c) {
+        System.out.println(c);
+    }
     public void testInvoke() {
+
         MethodAccess access = MethodAccess.get(SomeClass.class, ".");
+        access.accessor.IS_DEBUG=true;
         SomeClass someObject = new SomeClass();
         Object value;
         value = access.invoke(someObject, "test");
@@ -29,20 +34,20 @@ public class MethodAccessTest extends TestCase {
         assertEquals(null, value);
         value = access.invoke(someObject, "getIntValue");
         assertEquals(1234, value);
-        value = access.invoke(someObject, "methodWithManyArguments", 6, 2f,null);
+        value = access.invoke(someObject, "methodWithManyArguments", 6, 2f,null, null);
         assertEquals("test0", value);
         value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true);
         assertEquals("test1", value);
         value = access.invoke(null, "staticMethod", "moo", 1234);
         assertEquals("meow! moo, 1234", value);
         //int methodWithVarArgs(char,Double,Long,Integer[])
-        value = access.invoke(someObject, "methodWithVarArgs", 1,2,3);
+        value = access.invoke(someObject, "methodWithVarArgs", 1, 2, 3);
         assertEquals(0, value);
-        value = access.invoke(someObject, "methodWithVarArgs", null,2,3,4);
+        value = access.invoke(someObject, "methodWithVarArgs", 'x', 2, 3, 4);
         assertEquals(1, value);
-        value = access.invoke(someObject, "methodWithVarArgs", "B",null,3,4,null);
+        value = access.invoke(someObject, "methodWithVarArgs", "B", null, 3, 4, null);
         assertEquals(2, value);
-        value = access.invoke(someObject, "methodWithVarArgs", new BigDecimal(1),2,new BigDecimal(20),new Integer[2]);
+        value = access.invoke(someObject, "methodWithVarArgs", new BigDecimal(1), 2, new BigDecimal(20), new Integer[2]);
         assertEquals(2, value);
     }
 
@@ -134,8 +139,8 @@ public class MethodAccessTest extends TestCase {
             return "test1";
         }
 
-        public int methodWithVarArgs(char a,Double b,Long c,Integer ... d) {
-            return d.length;
+        public int methodWithVarArgs(char a, Double b, Long c, Integer... d) {
+            return d==null?0:d.length;
         }
 
         static public String staticMethod(String a, int b) {

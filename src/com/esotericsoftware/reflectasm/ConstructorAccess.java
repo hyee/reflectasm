@@ -1,22 +1,36 @@
 package com.esotericsoftware.reflectasm;
 
+import java.lang.reflect.Constructor;
+
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<T> {
-    public final ClassAccess classAccess;
-    public final Accessor accessor;
+    public final ClassAccess accessor;
+    public final ClassInfo classInfo;
 
     @Override
     public String toString() {
-        return classAccess.toString();
+        return accessor.toString();
     }
 
-    protected ConstructorAccess(ClassAccess classAccess) {
-        this.classAccess = classAccess;
-        accessor = classAccess.accessor;
+    protected ConstructorAccess(ClassAccess accessor) {
+        this.accessor = accessor;
+        this.classInfo = accessor.getInfo();
     }
 
     public boolean isNonStaticMemberClass() {
-        return classAccess.isNonStaticMemberClass();
+        return accessor.isNonStaticMemberClass();
+    }
+
+    public int getIndex(Class... paramTypes) {
+        return accessor.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
+    }
+
+    public int getIndex(int paramCount) {
+        return accessor.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramCount);
+    }
+
+    public int getIndex(Constructor<?> constructor) {
+        return accessor.indexOfConstructor(constructor);
     }
 
     /**
@@ -31,27 +45,16 @@ public class ConstructorAccess<T> {
         return (T) accessor.newInstance();
     }
 
-    public int getIndex(Class... paramTypes) {
-        return classAccess.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
+    public T newInstanceWithIndex(int constructorIndex, Object... args) {
+        return (T) accessor.newInstanceWithIndex(constructorIndex, args);
     }
 
-    public T newInstance(int constructorIndex, Object... args) {
-        return (T) classAccess.newInstance(constructorIndex, args);
+    public T newInstanceWithTypes(Class[] paramTypes, Object... args) {
+        return (T) accessor.newInstanceWithTypes(paramTypes, args);
     }
 
     public T newInstance(Object... args) {
-        return (T) classAccess.newInstance(args);
-    }
-
-    /**
-     * Constructor for inner classes (non-static nested classes).
-     *
-     * @param enclosingInstance The instance of the enclosing type to which this inner instance is related to (assigned to its
-     *                          synthetic this$0 field).
-     */
-    @SuppressWarnings("unchecked")
-    public T newInstance(Object enclosingInstance) {
-        return (T) accessor.newInstance(0, enclosingInstance);
+        return (T) accessor.newInstance(args);
     }
 
     static public <T> ConstructorAccess<T> get(Class<T> type, String... dumpFile) {

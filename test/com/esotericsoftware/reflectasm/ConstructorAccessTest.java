@@ -21,11 +21,12 @@ public class ConstructorAccessTest extends TestCase {
 
     public void testHasArgumentConstructor() {
         HasArgumentConstructor someObject = new HasArgumentConstructor("bla");
-        ConstructorAccess<HasArgumentConstructor> access = ConstructorAccess.get(HasArgumentConstructor.class);
-        assertEquals(someObject, access.accessor.newInstance(0, "bla"));
-        assertEquals(someObject, access.accessor.newInstance(0, "bla"));
-        assertEquals(someObject, access.accessor.newInstance(0, "bla"));
-        assertEquals(someObject, access.accessor.newInstance(0, "bla"));
+        ConstructorAccess<HasArgumentConstructor> access = ConstructorAccess.get(HasArgumentConstructor.class,".");
+        assertEquals(someObject, access.newInstance( "bla"));
+        int index=access.getIndex(String.class);
+        assertEquals(someObject, access.newInstanceWithIndex(index,"bla"));
+        assertEquals(someObject, access.newInstanceWithTypes(new Class[]{String.class},"bla"));
+        assertEquals((int)(access.accessor.get(access.newInstance(1),"y")),1);
     }
 
     public void testHasPrivateConstructor() {
@@ -125,9 +126,13 @@ public class ConstructorAccessTest extends TestCase {
 
     static public class HasArgumentConstructor {
         public String moo;
+        public int y;
 
         public HasArgumentConstructor(String moo) {
             this.moo = moo;
+        }
+        public HasArgumentConstructor( int x) {
+            this.y = x;
         }
 
         public boolean equals(Object obj) {

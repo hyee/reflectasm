@@ -15,7 +15,7 @@ This is the revised version, some differences from `EsotericSoftware/reflectasm`
 * Supports methods/constructors with variable parameters
 * Removes the harcodes of the package name
 
-To support Java 7, just need to change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
+To support Java 7, just change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
 
 ## Overview
 
@@ -72,6 +72,29 @@ Constructor reflection with ReflectASM:
 ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class);
 SomeClass someObject = access.newInstance();
 ```
+
+Class reflection with ReflectASM:
+
+| Method in ClassAccess | Equivalent | Discription |
+| -------------------- | ---------- | ----------- | 
+| get(Class) | (FileAccess/MethodAccess/ConstructorAccess).get | returns a wrapper object of the underlying class |
+| IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
+| IndexOf(name,type)| | returns the first element of `IndexesOf`|
+| IndexOfField(String/Field) | FileAccess.getIndex | returns the field index that matches the given input|
+| IndexOfMethod(String/Method) | MethodAccess.getIndex | returns the first method index that matches the given input|
+| indexOfMethod(name,argCount/{argTypes}) | (MethodAccess/ConstructorAccess).getIndex | returns the first index that matches the given input|
+| indexOfConstructor(constructor) | ConstructorAccess.getIndex | returns the index that matches the given constructor|
+| set(instance,Name/index,value) | FileAccess.set | Assign value to the specific field |
+| set<Primative>(instance,index,value) | FileAccess.set<Primative> | Assign primitive value to the specific field |
+| get(instance,name/index) | FileAccess.get | Get field value |
+| get<Primative>(instance,index) | FileAccess.get<Primative> | Get field value and convert to target primitive type|
+| get(instance,name/index, Class) | FileAccess.get | Get field value and convert to target class type|
+| invoke(instance,name/index,{args}) | MethodAccess.invoke | Execute method |
+| invokeWithWithTypes(instance,name/index,{argTypes},{args}) | MethodAccess.invoke | Invoke method by specifying parameter types in order to position the accurate constructor|
+| newInstance() | ConstructorAccess.newInstance | Create underlying Object |
+| newInstance({args}) | ConstructorAccess.newInstance | Create underlying Object |
+| newInstanceWithIndex(index,{args}) | ConstructorAccess.newInstance | Create underlying Object with the specific constructor index|
+| newInstanceWithTypes({argTypes},{args}) | ConstructorAccess.newInstance | Create underlying Object by specifying parameter types in order to position the accurate constructor|
 
 ## Avoiding Name Lookup
 

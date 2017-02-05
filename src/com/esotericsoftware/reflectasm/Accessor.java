@@ -5,7 +5,7 @@ interface Accessor {
 
     abstract public void setInfo(ClassInfo info);
 
-    abstract public Object newInstance(int constructorIndex, Object... args);
+    abstract public Object newInstanceWithIndex(int constructorIndex, Object... args);
 
     abstract public Object newInstance();
 
