@@ -11,9 +11,7 @@ public class MethodAccessTest extends TestCase {
         System.out.println(c);
     }
     public void testInvoke() {
-
         MethodAccess access = MethodAccess.get(SomeClass.class, ".");
-        access.accessor.IS_DEBUG=true;
         SomeClass someObject = new SomeClass();
         Object value;
         value = access.invoke(someObject, "test");
@@ -36,7 +34,7 @@ public class MethodAccessTest extends TestCase {
         assertEquals(1234, value);
         value = access.invoke(someObject, "methodWithManyArguments", 6, 2f,null, null);
         assertEquals("test0", value);
-        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true,1,2,3);
         assertEquals("test1", value);
         value = access.invoke(null, "staticMethod", "moo", 1234);
         assertEquals("meow! moo, 1234", value);

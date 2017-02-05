@@ -183,6 +183,7 @@ public class ClassAccess implements Accessor {
 
         try {
             accessClass = UnsafeHolder.theUnsafe.defineClass(accessClassName, bytes, 0, bytes.length, loader, type.getProtectionDomain());
+
         } catch (Throwable ignored1) {
             accessClass = loader.defineClass(accessClassName, bytes);
         }
@@ -787,6 +788,7 @@ public class ClassAccess implements Accessor {
      */
     public int indexOfMethod(String methodName, Class... argTypes) {
         Integer[] candidates = indexesOf(methodName, "method");
+        //if(IS_STRICT_CONVERT) return candidates[0];
         int result = -1;
         Class[][] paramTypes;
         Integer[] modifiers;
@@ -795,7 +797,7 @@ public class ClassAccess implements Accessor {
         int minDistance = 10;
         final int stepSize = 100;
         if (methodName.equals(CONSTRUCTOR_ALIAS)) {
-            for (int i = 0; i < candidates.length; i++) candidates[i] = i;
+            for (int i = 0,n= candidates.length; i<n; i++) candidates[i] = i;
             paramTypes = classInfo.constructorParamTypes;
             modifiers = classInfo.constructorModifiers;
         } else {
@@ -824,20 +826,21 @@ public class ClassAccess implements Accessor {
             }
             int thisDistance = 0;
             final int paramCount = paramTypes[index].length;
-            Object[] arguments = new Object[paramCount];
-            for (int i = 0; i < Math.min(argCount, paramCount); i++) {
-                if (i == paramCount - 1 && isVarArgs(modifiers[index])) break;
+            final int last = paramCount -1;
+            final boolean isVarArgs=isVarArgs(modifiers[index]);
+            for (int i = 0,n= Math.min(argCount, paramCount); i<n;i++) {
+                if (i == last && isVarArgs) break;
                 val[i] = NumberUtils.getDistance(argTypes[i], paramTypes[index][i]);
                 min = Math.min(val[i], min);
                 thisDistance += stepSize + val[i];
                 //System.out.println((argTypes[i]==null?"null":argTypes[i].getCanonicalName())+" <-> "+paramTypes[index][i].getCanonicalName()+": "+dis);
             }
-            if (argCount > paramCount - 1 && isVarArgs(modifiers[index])) {
+            if (argCount > last && isVarArgs) {
                 thisDistance += stepSize;
                 int dis = 5;
-                Class arrayType = paramTypes[index][paramCount - 1].getComponentType();
-                for (int i = paramCount - 1; i < argCount; i++) {
-                    val[i] = Math.max(getDistance(argTypes[i], arrayType), getDistance(argTypes[i], paramTypes[index][paramCount - 1]));
+                final Class arrayType = paramTypes[index][last].getComponentType();
+                for (int i = last; i < argCount; i++) {
+                    val[i] = Math.max(getDistance(argTypes[i], arrayType), getDistance(argTypes[i], paramTypes[index][last]));
                     dis = Math.min(dis, val[i]);
                 }
                 min = Math.min(dis, min);
@@ -920,21 +923,23 @@ public class ClassAccess implements Accessor {
         return methodName;
     }
 
-    private Object[] reArgs(int modifier, Class[] paramTypes, Object... args) {
-        final int argCount = args.length;
+    private Object[] reArgs(final int modifier, final Class[] paramTypes, final Object[] args) {
+        //if(IS_STRICT_CONVERT) return args;
         final int paramCount = paramTypes.length;
-        if (args.length == 0) return args;
+        if (paramCount == 0) return args;
+        final int argCount = args.length;
+        final int last = paramCount - 1;
+        final boolean isVarArgs=isVarArgs(modifier);
         Object[] arg = args;
-        if ((argCount != paramCount && !isVarArgs(modifier)) //
-                || (isVarArgs(modifier) && argCount < paramCount - 1)) {
+        if ((argCount != paramCount && !isVarArgs) //
+                || (isVarArgs && argCount < last)) {
             String methodName = getMethodNameByParamTypes(paramTypes);
             throw new IllegalArgumentException("Unable to invoke method: "//
                     + "\n    " + typesToString(methodName, args) //
                     + "\n    =>" + typesToString(methodName, paramTypes));
         }
-        if (isVarArgs(modifier)) {
-            final int last = paramCount - 1;
-            Class varArgsType = paramTypes[last];
+        if (isVarArgs) {
+            final Class varArgsType = paramTypes[last];
             if (argCount > paramCount) {
                 arg = Arrays.copyOf(args, paramCount);
                 arg[last] = Arrays.copyOfRange(args, last, argCount);
@@ -948,7 +953,7 @@ public class ClassAccess implements Accessor {
             }
         }
         if (!IS_STRICT_CONVERT) try {
-            for (int i = 0; i < Math.min(arg.length, paramCount); i++) arg[i] = convert(arg[i], paramTypes[i]);
+            for (int i = 0, n= Math.min(arg.length, paramCount);i < n; i++) arg[i] = convert(arg[i], paramTypes[i]);
         } catch (Exception e) {
             String methodName = getMethodNameByParamTypes(paramTypes);
             throw new IllegalArgumentException("Data conversion error when invoking method: " + e.getMessage()//

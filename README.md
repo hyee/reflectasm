@@ -44,8 +44,6 @@ The source code for these benchmarks are included in the project.
 ![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:83360132,325777324,6273470647,66804042,197249533,1483146277,4615079935,2084145078,2142319655&chds=0,6273470647&chxl=0:|Constructor - ReflectASM|Constructor - Direct|Constructor - Reflection|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 
-
-
 ## Usage
 
 Method reflection with ReflectASM:
@@ -73,28 +71,28 @@ ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class);
 SomeClass someObject = access.newInstance();
 ```
 
-Class reflection with ReflectASM:
+Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAccess):
 
-| Method in ClassAccess | Equivalent | Discription |
+| ClassAccess.*method* | Equivalent | Discription |
 | -------------------- | ---------- | ----------- | 
-| get(Class) | (FileAccess/MethodAccess/ConstructorAccess).get | returns a wrapper object of the underlying class |
+| get(Class) | (F/M/C).get | returns a wrapper object of the underlying class |
 | IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
 | IndexOf(name,type)| | returns the first element of `IndexesOf`|
-| IndexOfField(String/Field) | FileAccess.getIndex | returns the field index that matches the given input|
-| IndexOfMethod(String/Method) | MethodAccess.getIndex | returns the first method index that matches the given input|
-| indexOfMethod(name,argCount/{argTypes}) | (MethodAccess/ConstructorAccess).getIndex | returns the first index that matches the given input|
-| indexOfConstructor(constructor) | ConstructorAccess.getIndex | returns the index that matches the given constructor|
-| set(instance,Name/index,value) | FileAccess.set | Assign value to the specific field |
-| set<Primative>(instance,index,value) | FileAccess.set<Primative> | Assign primitive value to the specific field |
-| get(instance,name/index) | FileAccess.get | Get field value |
-| get<Primative>(instance,index) | FileAccess.get<Primative> | Get field value and convert to target primitive type|
-| get(instance,name/index, Class) | FileAccess.get | Get field value and convert to target class type|
-| invoke(instance,name/index,{args}) | MethodAccess.invoke | Execute method |
-| invokeWithWithTypes(instance,name/index,{argTypes},{args}) | MethodAccess.invoke | Invoke method by specifying parameter types in order to position the accurate constructor|
-| newInstance() | ConstructorAccess.newInstance | Create underlying Object |
-| newInstance({args}) | ConstructorAccess.newInstance | Create underlying Object |
-| newInstanceWithIndex(index,{args}) | ConstructorAccess.newInstance | Create underlying Object with the specific constructor index|
-| newInstanceWithTypes({argTypes},{args}) | ConstructorAccess.newInstance | Create underlying Object by specifying parameter types in order to position the accurate constructor|
+| IndexOfField(String/Field) | F.getIndex | returns the field index that matches the given input|
+| IndexOfMethod(String/Method) | M.getIndex | returns the first method index that matches the given input|
+| indexOfMethod(name,argCount/{argTypes}) | (M/C).getIndex | returns the first index that matches the given input|
+| indexOfConstructor(constructor) | C.getIndex | returns the index that matches the given constructor|
+| set(instance,Name/index,value) | F.set | Assign value to the specific field |
+| set*Primative*(instance,index,value) | F.set*Primative* | Assign primitive value to the specific field, *primitive* here can be `Integer/Long/Double/etc`  |
+| get(instance,name/index) | F.get | Get field value |
+| get*Primative*(instance,index) | F.get*Primative* | Get field value and convert to target primitive type|
+| get(instance,name/index, Class) | F.get | Get field value and convert to target class type|
+| invoke(instance,name/index,{args}) | M.invoke | Execute method |
+| invokeWithWithTypes(instance,name/index,{argTypes},{args}) | M.invokeWithWithTypes | Invoke method by specifying parameter types in order to position the accurate constructor|
+| newInstance() | C.newInstance | Create underlying Object |
+| newInstance({args}) | C.newInstance | Create underlying Object |
+| newInstanceWithIndex(index,{args}) | C.newInstanceWithIndex | Create underlying Object with the specific constructor index|
+| newInstanceWithTypes({argTypes},{args}) | C.newInstanceWithTypes | Create underlying Object by specifying parameter types in order to position the accurate constructor|
 
 ## Avoiding Name Lookup
 

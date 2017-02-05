@@ -10,6 +10,8 @@ import java.util.HashMap;
  */
 public class ClassAccessBenchmark {
     public static void main(String[] args) throws Exception {
+        ClassAccess.IS_DEBUG = true;
+        ClassAccess.IS_STRICT_CONVERT = true;
         new FieldAccessBenchmark();
         new MethodAccessBenchmark();
         new ConstructorAccessBenchmark();

@@ -69,7 +69,8 @@ public abstract class NumberUtils {
         STANDARD_NUMBER_TYPES = Collections.unmodifiableSet(numberTypes);
     }
 
-    private static <T> T convertOrGetDistance(Object from, Class toClass, boolean isGetDistance) {
+    private static <T> T convertOrGetDistance(Object from, Class toClass, final boolean isGetDistance) {
+        //return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
         if (from == null)
             return (T) (isGetDistance ? Integer.valueOf(namePrimitiveMap.containsKey(toClass.getName()) ? 0 : 5) : null);

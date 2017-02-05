@@ -6,36 +6,36 @@ public class ConstructorAccessBenchmark extends Benchmark {
     public static String[] result;
 
     public ConstructorAccessBenchmark() throws Exception {
-        int count = Benchmark.testRounds;
+        final int count = Benchmark.testRounds;
+        final int rounds = Benchmark.testCount;
         Object[] dontCompileMeAway = new Object[count];
 
         Class type = SomeClass.class;
         ConstructorAccess<SomeClass> access = ConstructorAccess.get(type);
 
-        for (int i = 0; i < Benchmark.testCount; i++)
+        for (int i = 0; i < rounds; i++)
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.newInstance();
-        for (int i = 0; i < Benchmark.testCount; i++)
+        for (int i = 0; i < rounds; i++)
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = type.newInstance();
         warmup = false;
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
-
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.newInstance();
 
         }
         end("Constructor - ReflectASM");
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = type.newInstance();
 
         }
         end("Constructor - Reflection");
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = new SomeClass();
         }

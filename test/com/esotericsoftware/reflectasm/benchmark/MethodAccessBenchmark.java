@@ -9,7 +9,8 @@ public class MethodAccessBenchmark extends Benchmark {
 
     public MethodAccessBenchmark() throws Exception {
         //ClassAccess.IS_STRICT_CONVERT=true;
-        int count = Benchmark.testRounds;
+        final int count = Benchmark.testRounds;
+        final int rounds = Benchmark.testCount;
         Object[] dontCompileMeAway = new Object[count];
         Object[] args = new Object[0];
 
@@ -20,7 +21,7 @@ public class MethodAccessBenchmark extends Benchmark {
         Method method = SomeClass.class.getMethod("getName");
         // method.setAccessible(true); // Improves reflection a bit.
 
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.invoke(someObject, index, args);
             for (int ii = 0; ii < count; ii++)
@@ -28,20 +29,20 @@ public class MethodAccessBenchmark extends Benchmark {
         }
         warmup = false;
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.invoke(someObject, index, args);
         }
         end("Method Call - ReflectASM");
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = method.invoke(someObject, args);
 
         }
         end("Method Call - Reflection");
         start();
-        for (int i = 0; i < Benchmark.testCount; i++) {
+        for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = someObject.getName();
 
