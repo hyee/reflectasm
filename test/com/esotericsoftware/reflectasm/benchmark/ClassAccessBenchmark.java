@@ -10,8 +10,8 @@ import java.util.HashMap;
  */
 public class ClassAccessBenchmark {
     public static void main(String[] args) throws Exception {
-        ClassAccess.IS_DEBUG = true;
-        ClassAccess.IS_STRICT_CONVERT = true;
+        //ClassAccess.IS_CACHED = true;
+        //ClassAccess.IS_STRICT_CONVERT = true;
         new FieldAccessBenchmark();
         new MethodAccessBenchmark();
         new ConstructorAccessBenchmark();
@@ -26,7 +26,6 @@ public class ClassAccessBenchmark {
             max = Math.max(max, Long.valueOf(result[1]));
             times[++index] = result[0];
             names[results.length - 1 - index] = result[2];
-
             String[] times0 = result[0].split(",");
             String[] names0 = result[2].split("\\|");
             String[] names1 = new String[names0.length];

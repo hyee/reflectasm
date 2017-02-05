@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.esotericsoftware.reflectasm.util.NumberUtils.*;
 import static java.lang.reflect.Modifier.isStatic;
@@ -27,8 +27,9 @@ public class ClassAccess implements Accessor {
     public static boolean IS_CACHED = true;
     public static boolean IS_STRICT_CONVERT = false;
     public static boolean IS_DEBUG = false;
-    static ConcurrentHashMap<Class, ClassAccess> cachedAccessors = new ConcurrentHashMap();
-    static ConcurrentHashMap<Integer, Integer> methoIndexer = new ConcurrentHashMap();
+    static HashMap<Class, ClassAccess> cachedAccessors = new HashMap();
+    static HashMap<Integer, Integer> methoIndexer = new HashMap();
+    static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     static final String thisPath = Type.getInternalName(ClassAccess.class);
     static final String accessorPath = Type.getInternalName(Accessor.class);
     static final String classInfoPath = Type.getInternalName(ClassInfo.class);
@@ -98,7 +99,10 @@ public class ClassAccess implements Accessor {
         ClassAccess self;
         final AccessClassLoader loader = AccessClassLoader.get(type);
         try {
-            if (IS_CACHED && cachedAccessors.containsKey(type)) return cachedAccessors.get(type);
+            if (IS_CACHED && cachedAccessors.containsKey(type)) try {
+                lock.readLock().lock();
+                if (cachedAccessors.containsKey(type)) return cachedAccessors.get(type);
+            } finally {lock.readLock().unlock();}
             try {
                 accessClass = loader.loadClass(accessClassName);
             } catch (ClassNotFoundException e) {
@@ -108,7 +112,11 @@ public class ClassAccess implements Accessor {
             }
             accessor = (Accessor) accessClass.newInstance();
             self = new ClassAccess(accessor.getInfo(), accessor);
-            if (IS_CACHED) cachedAccessors.put(type, self);
+            if (IS_CACHED) {
+                lock.writeLock().lock();
+                cachedAccessors.put(type, self);
+                lock.writeLock().unlock();
+            }
             return self;
         } catch (ClassNotFoundException e) {
         } catch (Exception ex) {
@@ -192,7 +200,11 @@ public class ClassAccess implements Accessor {
             info.attrIndex = accessor.getInfo().attrIndex;
             accessor.setInfo(info);
             self = new ClassAccess(info, accessor);
-            if (IS_CACHED) cachedAccessors.put(type, self);
+            if (IS_CACHED) {
+                lock.writeLock().lock();
+                cachedAccessors.put(type, self);
+                lock.writeLock().unlock();
+            }
             return new ClassAccess(info, accessor);
         } catch (Exception ex) {
             throw new RuntimeException("Error constructing method access class: " + accessClassName, ex);
@@ -797,7 +809,7 @@ public class ClassAccess implements Accessor {
         int minDistance = 10;
         final int stepSize = 100;
         if (methodName.equals(CONSTRUCTOR_ALIAS)) {
-            for (int i = 0,n= candidates.length; i<n; i++) candidates[i] = i;
+            for (int i = 0, n = candidates.length; i < n; i++) candidates[i] = i;
             paramTypes = classInfo.constructorParamTypes;
             modifiers = classInfo.constructorModifiers;
         } else {
@@ -805,7 +817,9 @@ public class ClassAccess implements Accessor {
             modifiers = classInfo.methodModifiers;
         }
         if (IS_CACHED) {
+            lock.readLock().lock();
             signature = getSignature(methodName, argTypes);
+            lock.readLock().unlock();
             if (methoIndexer.containsKey(signature)) {
                 int targetIndex = methoIndexer.get(signature);
                 minDistance = targetIndex / 10000;
@@ -821,14 +835,18 @@ public class ClassAccess implements Accessor {
             int min = 10;
             int[] val = new int[argCount + 1];
             if (Arrays.equals(argTypes, paramTypes[index])) {
-                if (IS_CACHED) methoIndexer.put(signature, index + 50000);
+                if (IS_CACHED) {
+                    lock.writeLock().lock();
+                    methoIndexer.put(signature, index + 50000);
+                    lock.writeLock().unlock();
+                }
                 return index;
             }
             int thisDistance = 0;
             final int paramCount = paramTypes[index].length;
-            final int last = paramCount -1;
-            final boolean isVarArgs=isVarArgs(modifiers[index]);
-            for (int i = 0,n= Math.min(argCount, paramCount); i<n;i++) {
+            final int last = paramCount - 1;
+            final boolean isVarArgs = isVarArgs(modifiers[index]);
+            for (int i = 0, n = Math.min(argCount, paramCount); i < n; i++) {
                 if (i == last && isVarArgs) break;
                 val[i] = NumberUtils.getDistance(argTypes[i], paramTypes[index][i]);
                 min = Math.min(val[i], min);
@@ -855,7 +873,11 @@ public class ClassAccess implements Accessor {
                 minDistance = min;
             }
         }
-        if (IS_CACHED) methoIndexer.put(signature, minDistance * 10000 + result);
+        if (IS_CACHED) {
+            lock.writeLock().lock();
+            methoIndexer.put(signature, minDistance * 10000 + result);
+            lock.writeLock().unlock();
+        }
         if (result != -1 && argCount == 0 && paramTypes[result].length == 0) return result;
         if (result == -1 || minDistance == 0 //
                 || (argCount != paramTypes[result].length && !isVarArgs(modifiers[result])) //
@@ -929,7 +951,7 @@ public class ClassAccess implements Accessor {
         if (paramCount == 0) return args;
         final int argCount = args.length;
         final int last = paramCount - 1;
-        final boolean isVarArgs=isVarArgs(modifier);
+        final boolean isVarArgs = isVarArgs(modifier);
         Object[] arg = args;
         if ((argCount != paramCount && !isVarArgs) //
                 || (isVarArgs && argCount < last)) {
@@ -944,8 +966,8 @@ public class ClassAccess implements Accessor {
                 arg = Arrays.copyOf(args, paramCount);
                 arg[last] = Arrays.copyOfRange(args, last, argCount);
             } else if (argCount == paramCount) {
-                if(arg[last]==null) arg[last]=Array.newInstance(varArgsType.getComponentType(),1);
-                else if(getDistance(arg[last].getClass(), varArgsType) <= getDistance(arg[last].getClass(), varArgsType.getComponentType()))
+                if (arg[last] == null) arg[last] = Array.newInstance(varArgsType.getComponentType(), 1);
+                else if (getDistance(arg[last].getClass(), varArgsType) <= getDistance(arg[last].getClass(), varArgsType.getComponentType()))
                     arg[last] = new Object[]{arg[last]};
             } else if (argCount == last) {
                 arg = Arrays.copyOf(arg, paramCount);
@@ -953,7 +975,7 @@ public class ClassAccess implements Accessor {
             }
         }
         if (!IS_STRICT_CONVERT) try {
-            for (int i = 0, n= Math.min(arg.length, paramCount);i < n; i++) arg[i] = convert(arg[i], paramTypes[i]);
+            for (int i = 0, n = Math.min(arg.length, paramCount); i < n; i++) arg[i] = convert(arg[i], paramTypes[i]);
         } catch (Exception e) {
             String methodName = getMethodNameByParamTypes(paramTypes);
             throw new IllegalArgumentException("Data conversion error when invoking method: " + e.getMessage()//

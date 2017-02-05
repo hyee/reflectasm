@@ -10,6 +10,7 @@ public class MethodAccessTest extends TestCase {
     public void abc(char c) {
         System.out.println(c);
     }
+
     public void testInvoke() {
         MethodAccess access = MethodAccess.get(SomeClass.class, ".");
         SomeClass someObject = new SomeClass();
@@ -32,9 +33,9 @@ public class MethodAccessTest extends TestCase {
         assertEquals(null, value);
         value = access.invoke(someObject, "getIntValue");
         assertEquals(1234, value);
-        value = access.invoke(someObject, "methodWithManyArguments", 6, 2f,null, null);
+        value = access.invoke(someObject, "methodWithManyArguments", 6, 2f, null, null);
         assertEquals("test0", value);
-        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true,1,2,3);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true, 1, 2, 3);
         assertEquals("test1", value);
         value = access.invoke(null, "staticMethod", "moo", 1234);
         assertEquals("meow! moo, 1234", value);
@@ -138,7 +139,7 @@ public class MethodAccessTest extends TestCase {
         }
 
         public int methodWithVarArgs(char a, Double b, Long c, Integer... d) {
-            return d==null?0:d.length;
+            return d == null ? 0 : d.length;
         }
 
         static public String staticMethod(String a, int b) {
