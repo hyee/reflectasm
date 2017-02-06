@@ -1,14 +1,14 @@
 package com.esotericsoftware.reflectasm.benchmark;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class Benchmark {
     public boolean warmup = true;
-    public HashMap<String, Long> testTimes = new HashMap();
+    public Map<String, Long> testTimes = new TreeMap<>();
     static int testRounds = 300000;
     static int testCount = 100;
     private long s;
@@ -38,7 +38,7 @@ public class Benchmark {
             }
         };
         ArrayList<Entry> list = new ArrayList(testTimes.entrySet());
-        Collections.sort(list, comparator);
+        //Collections.sort(list, comparator);
 
         StringBuilder names = new StringBuilder(512);
         StringBuilder times = new StringBuilder(512);

@@ -123,7 +123,7 @@ public class FieldAccess<ANY> {
         return (String) get(instance, fieldIndex);
     }
 
-    static public <ANY>FieldAccess get(Class<ANY> type, String... dumpFile) {
+    static public <ANY> FieldAccess get(Class<ANY> type, String... dumpFile) {
         return new FieldAccess(ClassAccess.get(type, dumpFile));
     }
 }

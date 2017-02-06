@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class ClassAccessBenchmark {
     public static void main(String[] args) throws Exception {
         //ClassAccess.IS_CACHED = true;
-        //ClassAccess.IS_STRICT_CONVERT = true;
+        ClassAccess.IS_STRICT_CONVERT = true;
         new FieldAccessBenchmark();
         new MethodAccessBenchmark();
         new ConstructorAccessBenchmark();
@@ -39,8 +39,10 @@ public class ClassAccessBenchmark {
                 }
                 String name = names0[i].substring(tagIdx + 1).trim();
                 names1[names0.length - 1 - i] = name;
-                if (!map.containsKey(name)) map.put(name, i);
-                times1[i] = String.valueOf(Math.floor(Long.valueOf(times0[map.get(name)]) / 1e6));
+                if (!map.containsKey(name)) {
+                    map.put(name, i);
+                }
+                times1[map.get(name)] = String.valueOf(Math.floor(Long.valueOf(times0[i]) / (Double) 1e6));
             }
 
             if (index == 0) {

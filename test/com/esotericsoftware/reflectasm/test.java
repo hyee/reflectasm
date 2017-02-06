@@ -1,8 +1,5 @@
 package com.esotericsoftware.reflectasm;
 
-import com.esotericsoftware.reflectasm.Accessor;
-import com.esotericsoftware.reflectasm.ClassAccess;
-import com.esotericsoftware.reflectasm.ClassInfo;
 import com.esotericsoftware.reflectasm.MethodAccessTest.SomeClass;
 
 public class test extends Object implements Accessor<SomeClass> {
@@ -32,25 +29,25 @@ public class test extends Object implements Accessor<SomeClass> {
     }
 
     public Object invoke(SomeClass var1, int var2, Object... var3) {
-        switch(var2) {
+        switch (var2) {
             case 0:
                 return var1.getName();
             case 1:
-                var1.setName((String)var3[0]);
+                var1.setName((String) var3[0]);
                 return null;
             case 2:
-                var1.setValue(((Integer)var3[0]).intValue(), (Boolean)var3[1]);
+                var1.setValue(((Integer) var3[0]).intValue(), (Boolean) var3[1]);
                 return null;
             case 3:
                 return Integer.valueOf(var1.getIntValue());
             case 4:
-                return SomeClass.staticMethod((String)var3[0], ((Integer)var3[1]).intValue());
+                return SomeClass.staticMethod((String) var3[0], ((Integer) var3[1]).intValue());
             case 5:
-                return Integer.valueOf(var1.methodWithVarArgs(((Character)var3[0]).charValue(), (Double)var3[1], (Long)var3[2], (Integer[])var3[3]));
+                return Integer.valueOf(var1.methodWithVarArgs(((Character) var3[0]).charValue(), (Double) var3[1], (Long) var3[2], (Integer[]) var3[3]));
             case 6:
-                return var1.methodWithManyArguments(((Integer)var3[0]).intValue(), ((Float)var3[1]).floatValue(), (Integer[])var3[2], (SomeClass[])var3[3]);
+                return var1.methodWithManyArguments(((Integer) var3[0]).intValue(), ((Float) var3[1]).floatValue(), (Integer[]) var3[2], (SomeClass[]) var3[3]);
             case 7:
-                return var1.methodWithManyArguments(((Integer)var3[0]).intValue(), ((Float)var3[1]).floatValue(), (Integer[])var3[2], (Float)var3[3], (SomeClass[])var3[4], (Boolean)var3[5], (int[])var3[6]);
+                return var1.methodWithManyArguments(((Integer) var3[0]).intValue(), ((Float) var3[1]).floatValue(), (Integer[]) var3[2], (Float) var3[3], (SomeClass[]) var3[4], (Boolean) var3[5], (int[]) var3[6]);
             case 8:
                 var1.test();
                 return null;
@@ -60,7 +57,7 @@ public class test extends Object implements Accessor<SomeClass> {
     }
 
     public Object get(SomeClass var1, int var2) {
-        switch(var2) {
+        switch (var2) {
             case 0:
                 return var1.name;
             case 1:
@@ -74,18 +71,18 @@ public class test extends Object implements Accessor<SomeClass> {
     }
 
     public void set(SomeClass var1, int var2, Object var3) {
-        switch(var2) {
+        switch (var2) {
             case 0:
-                var1.name = (String)var3;
+                var1.name = (String) var3;
                 return;
             case 1:
 
                 return;
             case 2:
-                SomeClass.bu = ((Boolean)var3).booleanValue();
+                SomeClass.bu = ((Boolean) var3).booleanValue();
                 return;
             case 3:
-                SomeClass.x = ((Boolean)var3).booleanValue();
+                SomeClass.x = ((Boolean) var3).booleanValue();
                 return;
             default:
                 throw new IllegalArgumentException("Field not found: " + var2);
@@ -93,13 +90,13 @@ public class test extends Object implements Accessor<SomeClass> {
     }
 
     public SomeClass newInstanceWithIndex(int var1, Object... var2) {
-        switch(var1) {
+        switch (var1) {
             case 0:
                 return new SomeClass();
             case 1:
-                return new SomeClass((String)var2[0]);
+                return new SomeClass((String) var2[0]);
             case 2:
-                return new SomeClass(((Integer)var2[0]).intValue(), ((Integer)var2[1]).intValue());
+                return new SomeClass(((Integer) var2[0]).intValue(), ((Integer) var2[1]).intValue());
             default:
                 throw new IllegalArgumentException("Constructor not found: " + var1);
         }

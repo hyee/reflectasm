@@ -12,8 +12,10 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvoke() {
+        MethodAccess<SomeClass> access1 = MethodAccess.get(ConcurrentHashMap.class, ".");
+
         MethodAccess<SomeClass> access = MethodAccess.get(SomeClass.class, ".");
-        SomeClass someObject = new SomeClass();
+        SomeClass someObject = access.accessor.newInstance();
         Object value;
         value = access.invoke(someObject, "test");
         value = access.invoke(someObject, "getName");
@@ -51,7 +53,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        MethodAccess<EmptyClass> access = MethodAccess.get(EmptyClass.class,".");
+        MethodAccess<EmptyClass> access = MethodAccess.get(EmptyClass.class, ".");
         try {
             access.getIndex("name");
             fail();
@@ -114,15 +116,15 @@ public class MethodAccessTest extends TestCase {
         static boolean bu;
         public static boolean x;
 
-        public SomeClass(){
+        public SomeClass() {
 
         }
 
-        public SomeClass(int x,int y){
+        public SomeClass(int x, int y) {
 
         }
 
-        public SomeClass(String x){
+        public SomeClass(String x) {
 
         }
 

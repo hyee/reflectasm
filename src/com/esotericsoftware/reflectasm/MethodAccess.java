@@ -72,7 +72,7 @@ public class MethodAccess<ANY> {
         return accessor.getReturnTypes();
     }
 
-    static public <ANY>MethodAccess get(Class<ANY> type, String... dumpFile) {
+    static public <ANY> MethodAccess get(Class<ANY> type, String... dumpFile) {
         return new MethodAccess(ClassAccess.get(type, dumpFile));
     }
 }

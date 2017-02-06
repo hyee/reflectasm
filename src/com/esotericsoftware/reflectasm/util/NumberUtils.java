@@ -72,8 +72,7 @@ public abstract class NumberUtils {
     private static <T> T convertOrGetDistance(Object from, Class toClass, final boolean isGetDistance) {
         //return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
-        if (from == null)
-            return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? 0 : 5) : null);
+        if (from == null) return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? 0 : 5) : null);
         Class clz;
         boolean isClass = false;
         if (!(from instanceof Class)) clz = from.getClass();

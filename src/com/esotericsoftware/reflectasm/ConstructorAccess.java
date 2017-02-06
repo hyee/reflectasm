@@ -57,8 +57,7 @@ public class ConstructorAccess<ANY> {
         return accessor.newInstance(args);
     }
 
-    static public <ANY>ConstructorAccess get(Class<ANY> type, String... dumpFile) {
+    static public <ANY> ConstructorAccess get(Class<ANY> type, String... dumpFile) {
         return new ConstructorAccess<ANY>(ClassAccess.get(type, dumpFile));
     }
-
 }
