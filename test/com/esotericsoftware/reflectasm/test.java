@@ -3,29 +3,29 @@ package com.esotericsoftware.reflectasm;
 import com.esotericsoftware.reflectasm.MethodAccessTest.SomeClass;
 
 public class test extends Object implements Accessor<SomeClass> {
-    ClassInfo classInfo = new ClassInfo();
+    final static ClassInfo classInfo = new ClassInfo();
 
-    public ClassInfo getInfo() {
-        return this.classInfo;
+    static {
+        classInfo.methodNames = new String[]{"getName", "setName", "setValue", "getIntValue", "staticMethod", "methodWithVarArgs", "methodWithManyArguments", "methodWithManyArguments", "test"};
+        classInfo.methodParamTypes = new Class[][]{new Class[0], {String.class}, {Integer.TYPE, Boolean.class}, new Class[0], {String.class, Integer.TYPE}, {Character.TYPE, Double.class, Long.class, Integer[].class}, {Integer.TYPE, Float.TYPE, Integer[].class, SomeClass[].class}, {Integer.TYPE, Float.TYPE, Integer[].class, Float.class, SomeClass[].class, Boolean.class, int[].class}, new Class[0]};
+        classInfo.returnTypes = new Class[]{String.class, Void.TYPE, Void.TYPE, Integer.TYPE, String.class, Integer.TYPE, String.class, String.class, Void.TYPE};
+        classInfo.methodModifiers = new Integer[]{Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(9), Integer.valueOf(129), Integer.valueOf(1), Integer.valueOf(129), Integer.valueOf(1)};
+        classInfo.fieldNames = new String[]{"name", "intValue", "bu", "x"};
+        classInfo.fieldTypes = new Class[]{String.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE};
+        classInfo.fieldModifiers = new Integer[]{Integer.valueOf(0), Integer.valueOf(2), Integer.valueOf(8), Integer.valueOf(9)};
+        classInfo.constructorParamTypes = new Class[][]{new Class[0], {String.class}, {Integer.TYPE, Integer.TYPE}};
+        classInfo.constructorModifiers = new Integer[]{Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1)};
+        classInfo.baseClass = SomeClass.class;
+        classInfo.isNonStaticMemberClass = true;
+        ClassAccess.buildIndex(classInfo);
     }
 
-    public void setInfo(ClassInfo var1) {
-        this.classInfo = var1;
+    public ClassInfo getInfo() {
+        return classInfo;
     }
 
     public test() {
-        this.classInfo.methodNames = new String[]{"getName", "setName", "setValue", "getIntValue", "staticMethod", "methodWithVarArgs", "methodWithManyArguments", "methodWithManyArguments", "test"};
-        this.classInfo.methodParamTypes = new Class[][]{new Class[0], {String.class}, {Integer.TYPE, Boolean.class}, new Class[0], {String.class, Integer.TYPE}, {Character.TYPE, Double.class, Long.class, Integer[].class}, {Integer.TYPE, Float.TYPE, Integer[].class, SomeClass[].class}, {Integer.TYPE, Float.TYPE, Integer[].class, Float.class, SomeClass[].class, Boolean.class, int[].class}, new Class[0]};
-        this.classInfo.returnTypes = new Class[]{String.class, Void.TYPE, Void.TYPE, Integer.TYPE, String.class, Integer.TYPE, String.class, String.class, Void.TYPE};
-        this.classInfo.methodModifiers = new Integer[]{Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(9), Integer.valueOf(129), Integer.valueOf(1), Integer.valueOf(129), Integer.valueOf(1)};
-        this.classInfo.fieldNames = new String[]{"name", "intValue", "bu", "x"};
-        this.classInfo.fieldTypes = new Class[]{String.class, Integer.TYPE, Boolean.TYPE, Boolean.TYPE};
-        this.classInfo.fieldModifiers = new Integer[]{Integer.valueOf(0), Integer.valueOf(2), Integer.valueOf(8), Integer.valueOf(9)};
-        this.classInfo.constructorParamTypes = new Class[][]{new Class[0], {String.class}, {Integer.TYPE, Integer.TYPE}};
-        this.classInfo.constructorModifiers = new Integer[]{Integer.valueOf(1), Integer.valueOf(1), Integer.valueOf(1)};
-        this.classInfo.baseClass = SomeClass.class;
-        this.classInfo.isNonStaticMemberClass = true;
-        ClassAccess.buildIndex(this.classInfo);
+
     }
 
     public Object invoke(SomeClass var1, int var2, Object... var3) {

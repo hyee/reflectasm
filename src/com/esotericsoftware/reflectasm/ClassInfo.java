@@ -25,7 +25,7 @@ public class ClassInfo {
     public int fieldCount;
     public int constructorCount;
     public Map<String, Integer[]> attrIndex;
-    public Map<Method, Integer> methods;
-    public Map<Field, Integer> fields;
-    public Map<Constructor<?>, Integer> constructors;
+    public String[] methodDescs;
+    public String[] fieldDescs;
+    public String[] constructorDescs;
 }

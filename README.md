@@ -14,6 +14,7 @@ This is the revised version, some differences from `EsotericSoftware/reflectasm`
 * Accuratly position the closest method for overloading
 * Supports methods/constructors with variable parameters
 * Removes the harcodes of the package name
+* Supports accessing non-public class/method/field
 
 To support Java 7, just change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
 
