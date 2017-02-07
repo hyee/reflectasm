@@ -17,7 +17,7 @@ import junit.framework.TestCase;
 
 public class FieldAccessTest extends TestCase {
     public void testNameSetAndGet() {
-        FieldAccess<SomeClass> access = FieldAccess.get(SomeClass.class);
+        FieldAccess<SomeClass> access = FieldAccess.access(SomeClass.class, ".");
         SomeClass test = new SomeClass();
 
         assertEquals(null, test.name);
@@ -32,7 +32,7 @@ public class FieldAccessTest extends TestCase {
     }
 
     public void testIndexSetAndGet() {
-        FieldAccess access = FieldAccess.get(SomeClass.class);
+        FieldAccess<SomeClass> access = FieldAccess.access(SomeClass.class, ".");
         SomeClass test = new SomeClass();
         int index;
 
@@ -82,7 +82,7 @@ public class FieldAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        FieldAccess access = FieldAccess.get(EmptyClass.class);
+        FieldAccess access = FieldAccess.access(EmptyClass.class);
         try {
             access.getIndex("name");
             fail();

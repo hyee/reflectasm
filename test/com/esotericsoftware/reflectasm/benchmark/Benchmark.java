@@ -14,6 +14,7 @@ public class Benchmark {
     private long s;
 
     public void start() {
+        if (warmup) return;
         s = System.nanoTime();
     }
 
@@ -44,6 +45,7 @@ public class Benchmark {
         StringBuilder times = new StringBuilder(512);
         long max = 0;
         int count = 0;
+
         for (Entry<String, Long> entry : list) {
             String name = entry.getKey();
             names.insert(0, '|');

@@ -1,14 +1,20 @@
 package com.esotericsoftware.reflectasm;
 
 import junit.framework.TestCase;
+import test.Many;
 
 /**
  * Created by Will on 2017/2/6.
  */
 public class ClassAccessTest extends TestCase {
     public void testBase() {
-        ClassAccess<BaseClass> access = ClassAccess.get(BaseClass.class, ".", "");
-        ClassAccess access1 = ClassAccess.get(BaseClass.Inner.class);
+        ClassAccess<Many> access0 = ClassAccess.access(Many.class, ".", "");
+        Many many = access0.newInstance();
+        access0.set(many, "x295", 123);
+        assertEquals(123, access0.get(many, "x295"));
+
+        ClassAccess<BaseClass> access = ClassAccess.access(BaseClass.class, ".", "");
+        ClassAccess access1 = ClassAccess.access(BaseClass.Inner.class);
         try {
             BaseClass instance = access.newInstance();
             fail();
@@ -18,9 +24,9 @@ public class ClassAccessTest extends TestCase {
         BaseClass.Inner inner = (BaseClass.Inner) access.invoke(instance, "newInner");
 
         access1.newInstance(instance);
-        access = ClassAccess.get(BaseClass.StaticInner.class);
+        access = ClassAccess.access(BaseClass.StaticInner.class);
         access.newInstance(instance);
-        access = ClassAccess.get(BaseClass.Inner.DeeperInner.class);
+        access = ClassAccess.access(BaseClass.Inner.DeeperInner.class);
         access.newInstance(inner);
     }
 

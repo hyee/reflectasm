@@ -27,7 +27,7 @@ public class ClassLoaderTest1 extends TestCase {
         Object testObject = testClass.newInstance();
 
         // Ensure AccessClassLoader can access both the Test class and FieldAccess.
-        FieldAccess access = FieldAccess.get(testObject.getClass());
+        FieldAccess access = FieldAccess.access(testObject.getClass());
         access.set(testObject, "name", "first");
         assertEquals("first", testObject.toString());
         assertEquals("first", access.get(testObject, "name"));
@@ -39,7 +39,7 @@ public class ClassLoaderTest1 extends TestCase {
         ClassLoader testClassLoader1 = new TestClassLoader1();
         Class testClass1 = testClassLoader1.loadClass(Test.class.getName());
         Object testObject1 = testClass1.newInstance();
-        FieldAccess access1 = FieldAccess.get(testObject1.getClass());
+        FieldAccess access1 = FieldAccess.access(testObject1.getClass());
         access1.set(testObject1, "name", "first");
         assertEquals("first", testObject1.toString());
         assertEquals("first", access1.get(testObject1, "name"));
@@ -47,7 +47,7 @@ public class ClassLoaderTest1 extends TestCase {
         ClassLoader testClassLoader2 = new TestClassLoader2();
         Class testClass2 = testClassLoader2.loadClass(Test.class.getName());
         Object testObject2 = testClass2.newInstance();
-        FieldAccess access2 = FieldAccess.get(testObject2.getClass());
+        FieldAccess access2 = FieldAccess.access(testObject2.getClass());
         access2.set(testObject2, "name", "second");
         assertEquals("second", testObject2.toString());
         assertEquals("second", access2.get(testObject2, "name"));
@@ -91,7 +91,7 @@ public class ClassLoaderTest1 extends TestCase {
         ClassLoader testClassLoader1 = new TestClassLoader1();
         Class testClass1 = testClassLoader1.loadClass(Test.class.getName());
         Object testObject1 = testClass1.newInstance();
-        FieldAccess access1 = FieldAccess.get(testObject1.getClass());
+        FieldAccess access1 = FieldAccess.access(testObject1.getClass());
         access1.set(testObject1, "name", "first");
         assertEquals("first", testObject1.toString());
         assertEquals("first", access1.get(testObject1, "name"));
@@ -99,7 +99,7 @@ public class ClassLoaderTest1 extends TestCase {
         ClassLoader testClassLoader2 = new TestClassLoader2();
         Class testClass2 = testClassLoader2.loadClass(Test.class.getName());
         Object testObject2 = testClass2.newInstance();
-        FieldAccess access2 = FieldAccess.get(testObject2.getClass());
+        FieldAccess access2 = FieldAccess.access(testObject2.getClass());
         access2.set(testObject2, "name", "second");
         assertEquals("second", testObject2.toString());
         assertEquals("second", access2.get(testObject2, "name"));

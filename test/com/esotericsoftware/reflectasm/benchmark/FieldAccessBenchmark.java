@@ -12,7 +12,7 @@ public class FieldAccessBenchmark extends Benchmark {
         final int rounds = Benchmark.testCount;
         Object[] dontCompileMeAway = new Object[count];
 
-        FieldAccess access = FieldAccess.get(SomeClass.class);
+        FieldAccess access = FieldAccess.access(SomeClass.class);
         SomeClass someObject = new SomeClass();
         int index = access.getIndex("name");
 
@@ -20,8 +20,8 @@ public class FieldAccessBenchmark extends Benchmark {
 
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++) {
-                access.set(someObject, index, "first");
-                dontCompileMeAway[ii] = access.get(someObject, index);
+                access.console.accessor.set(someObject, index, "first");
+                dontCompileMeAway[ii] = access.console.accessor.get(someObject, index);
             }
             for (int ii = 0; ii < count; ii++) {
                 field.set(someObject, "first");
@@ -32,8 +32,8 @@ public class FieldAccessBenchmark extends Benchmark {
         start();
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++) {
-                access.set(someObject, index, "first");
-                dontCompileMeAway[ii] = access.get(someObject, index);
+                access.console.accessor.set(someObject, index, "first");
+                dontCompileMeAway[ii] = access.console.accessor.get(someObject, index);
             }
         }
         end("Field Set+Get - ReflectASM");

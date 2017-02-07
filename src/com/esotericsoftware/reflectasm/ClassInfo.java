@@ -4,12 +4,10 @@ package com.esotericsoftware.reflectasm;
  * Created by Will on 2017/2/2.
  */
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 public class ClassInfo {
+    public int bucket;
     public String[] fieldNames = null;
     public Class[] fieldTypes;
     public Integer[] fieldModifiers;

@@ -1,6 +1,6 @@
 package com.esotericsoftware.reflectasm.benchmark;
 
-import com.esotericsoftware.reflectasm.MethodAccess;
+import com.esotericsoftware.reflectasm.ClassAccess;
 
 import java.lang.reflect.Method;
 
@@ -14,16 +14,16 @@ public class MethodAccessBenchmark extends Benchmark {
         Object[] dontCompileMeAway = new Object[count];
         Object[] args = new Object[0];
 
-        MethodAccess access = MethodAccess.get(SomeClass.class);
+        ClassAccess<SomeClass> access = ClassAccess.access(SomeClass.class);
         SomeClass someObject = new SomeClass();
-        int index = access.getIndex("getName");
+        int index = access.indexOfMethod("getName");
 
         Method method = SomeClass.class.getMethod("getName");
         // method.setAccessible(true); // Improves reflection a bit.
 
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
-                dontCompileMeAway[ii] = access.invoke(someObject, index, args);
+                dontCompileMeAway[ii] = access.accessor.invokeWithIndex(someObject, index, args);
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = method.invoke(someObject, args);
         }
@@ -31,7 +31,7 @@ public class MethodAccessBenchmark extends Benchmark {
         start();
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
-                dontCompileMeAway[ii] = access.invoke(someObject, index, args);
+                dontCompileMeAway[ii] = access.accessor.invokeWithIndex(someObject, index, args);
         }
         end("Method Call - ReflectASM");
         start();

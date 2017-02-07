@@ -4,33 +4,33 @@ import java.lang.reflect.Constructor;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<ANY> {
-    public final ClassAccess<ANY> accessor;
+    public final ClassAccess<ANY> console;
     public final ClassInfo classInfo;
 
     @Override
     public String toString() {
-        return accessor.toString();
+        return console.toString();
     }
 
-    protected ConstructorAccess(ClassAccess<ANY> accessor) {
-        this.accessor = accessor;
-        this.classInfo = accessor.getInfo();
+    protected ConstructorAccess(ClassAccess<ANY> console) {
+        this.console = console;
+        this.classInfo = console.getInfo();
     }
 
     public boolean isNonStaticMemberClass() {
-        return accessor.isNonStaticMemberClass();
+        return console.isNonStaticMemberClass();
     }
 
     public int getIndex(Class... paramTypes) {
-        return accessor.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
+        return console.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
     }
 
     public int getIndex(int paramCount) {
-        return accessor.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramCount);
+        return console.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramCount);
     }
 
     public int getIndex(Constructor<ANY> constructor) {
-        return accessor.indexOfConstructor(constructor);
+        return console.indexOfConstructor(constructor);
     }
 
     /**
@@ -42,22 +42,22 @@ public class ConstructorAccess<ANY> {
      */
     @SuppressWarnings("unchecked")
     public ANY newInstance() {
-        return accessor.newInstance();
+        return console.newInstance();
     }
 
     public ANY newInstanceWithIndex(int constructorIndex, Object... args) {
-        return accessor.newInstanceWithIndex(constructorIndex, args);
+        return console.newInstanceWithIndex(constructorIndex, args);
     }
 
     public ANY newInstanceWithTypes(Class[] paramTypes, Object... args) {
-        return accessor.newInstanceWithTypes(paramTypes, args);
+        return console.newInstanceWithTypes(paramTypes, args);
     }
 
     public ANY newInstance(Object... args) {
-        return accessor.newInstance(args);
+        return console.newInstance(args);
     }
 
-    static public <ANY> ConstructorAccess get(Class<ANY> type, String... dumpFile) {
-        return new ConstructorAccess<ANY>(ClassAccess.get(type, dumpFile));
+    static public <ANY> ConstructorAccess access(Class<ANY> type, String... dumpFile) {
+        return new ConstructorAccess<ANY>(ClassAccess.access(type, dumpFile));
     }
 }

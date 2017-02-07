@@ -13,7 +13,7 @@ public class ClassLoaderTest extends TestCase {
         Object testObject = testClass.newInstance();
 
         // Ensure AccessClassLoader can access both the Test class and FieldAccess.
-        FieldAccess access = FieldAccess.get(testObject.getClass());
+        FieldAccess access = FieldAccess.access(testObject.getClass());
         access.set(testObject, "name", "first");
         assertEquals("first", testObject.toString());
         assertEquals("first", access.get(testObject, "name"));
@@ -25,7 +25,7 @@ public class ClassLoaderTest extends TestCase {
         ClassLoader testClassLoader1 = new TestClassLoader1();
         Class testClass1 = testClassLoader1.loadClass("com.esotericsoftware.reflectasm.ClassLoaderTest$Test");
         Object testObject1 = testClass1.newInstance();
-        FieldAccess access1 = FieldAccess.get(testObject1.getClass());
+        FieldAccess access1 = FieldAccess.access(testObject1.getClass());
         access1.set(testObject1, "name", "first");
         assertEquals("first", testObject1.toString());
         assertEquals("first", access1.get(testObject1, "name"));
@@ -33,13 +33,13 @@ public class ClassLoaderTest extends TestCase {
         ClassLoader testClassLoader2 = new TestClassLoader2();
         Class testClass2 = testClassLoader2.loadClass("com.esotericsoftware.reflectasm.ClassLoaderTest$Test");
         Object testObject2 = testClass2.newInstance();
-        FieldAccess access2 = FieldAccess.get(testObject2.getClass());
+        FieldAccess access2 = FieldAccess.access(testObject2.getClass());
         access2.set(testObject2, "name", "second");
         assertEquals("second", testObject2.toString());
         assertEquals("second", access2.get(testObject2, "name"));
 
-        assertEquals(access1.accessor.getClass().toString(), access2.accessor.getClass().toString()); // Same class names
-        assertFalse(access1.accessor.accessor.getClass().equals(access2.accessor.accessor.getClass())); // But different classes
+        assertEquals(access1.console.getClass().toString(), access2.console.getClass().toString()); // Same class names
+        assertFalse(access1.console.accessor.getClass().equals(access2.console.accessor.getClass())); // But different classes
 
         assertEquals(initialCount + 2, AccessClassLoader.activeAccessClassLoaders());
 
@@ -76,7 +76,7 @@ public class ClassLoaderTest extends TestCase {
         ClassLoader testClassLoader1 = new TestClassLoader1();
         Class testClass1 = testClassLoader1.loadClass("com.esotericsoftware.reflectasm.ClassLoaderTest$Test");
         Object testObject1 = testClass1.newInstance();
-        FieldAccess access1 = FieldAccess.get(testObject1.getClass());
+        FieldAccess access1 = FieldAccess.access(testObject1.getClass());
         access1.set(testObject1, "name", "first");
         assertEquals("first", testObject1.toString());
         assertEquals("first", access1.get(testObject1, "name"));
@@ -84,13 +84,13 @@ public class ClassLoaderTest extends TestCase {
         ClassLoader testClassLoader2 = new TestClassLoader2();
         Class testClass2 = testClassLoader2.loadClass("com.esotericsoftware.reflectasm.ClassLoaderTest$Test");
         Object testObject2 = testClass2.newInstance();
-        FieldAccess access2 = FieldAccess.get(testObject2.getClass());
+        FieldAccess access2 = FieldAccess.access(testObject2.getClass());
         access2.set(testObject2, "name", "second");
         assertEquals("second", testObject2.toString());
         assertEquals("second", access2.get(testObject2, "name"));
 
-        assertEquals(access1.accessor.accessor.getClass().toString(), access2.accessor.accessor.getClass().toString()); // Same class names
-        assertFalse(access1.accessor.accessor.getClass().equals(access2.accessor.accessor.getClass())); // But different classes
+        assertEquals(access1.console.accessor.getClass().toString(), access2.console.accessor.getClass().toString()); // Same class names
+        assertFalse(access1.console.accessor.getClass().equals(access2.console.accessor.getClass())); // But different classes
 
         assertEquals(initialCount + 2, AccessClassLoader.activeAccessClassLoaders());
 

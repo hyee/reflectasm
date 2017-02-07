@@ -11,11 +11,11 @@ public class ConstructorAccessBenchmark extends Benchmark {
         Object[] dontCompileMeAway = new Object[count];
 
         Class type = SomeClass.class;
-        ConstructorAccess<SomeClass> access = ConstructorAccess.get(type);
+        ConstructorAccess<SomeClass> access = ConstructorAccess.access(type);
 
         for (int i = 0; i < rounds; i++)
             for (int ii = 0; ii < count; ii++)
-                dontCompileMeAway[ii] = access.newInstance();
+                dontCompileMeAway[ii] = access.console.accessor.newInstance();
         for (int i = 0; i < rounds; i++)
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = type.newInstance();

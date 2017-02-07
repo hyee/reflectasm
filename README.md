@@ -22,27 +22,22 @@ To support Java 7, just change the imports in class `ClassAccess` to add back th
 
 ReflectASM is a very small Java library that provides high performance reflection by using code generation. An access class is generated to set/get fields, call methods, or create a new instance. The access class uses bytecode rather than Java's reflection, so it is much faster. It can also access primitive fields via bytecode to avoid boxing.
 
-## Performance
-Test OS: Win10 x64<br/>
-Test VM: Java 1.8u112 x86<br/>
-The source code for these benchmarks are included in the project. 
-
-#### Summary(Smaller value means better performane)
+#### Summary of the cost(Smaller value means better performane)
 
 | VM | Item | Direct | ReflectASM | Reflection |
 | --- | --- |  ---------  |  ---------  |  ---------  |
-| Server VM | Field Set+Get | 37.0 | 284.0 | 431.0 |
-| Server VM | Method Call | 23.0 | 137.0 | 162.0 |
-| Server VM | Constructor | 149.0 | 217.0 | 301.0 |
-| Client VM | Field Set+Get | 83.0 | 325.0 | 6273.0 |
-| Client VM | Method Call | 66.0 | 197.0 | 1483.0 |
-| Client VM | Constructor | 2084.0 | 2142.0 | 4615.0 |
+| Server VM | Field Set+Get | 1.33 ns | 6.55 ns | 12.37 ns |
+| Server VM | Method Call | 0.79 ns | 3.26 ns | 4.26 ns |
+| Server VM | Constructor | 4.76 ns | 7.49 ns | 9.61 ns |
+| Client VM | Field Set+Get | 2.60 ns | 12.43 ns | 203.03 ns |
+| Client VM | Method Call | 2.15 ns | 7.79 ns | 47.56 ns |
+| Client VM | Constructor | 66.10 ns | 69.23 ns | 147.64 ns |
 
 #### Server VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:37764458,284405915,431107964,23479961,137938401,162971148,149643410,217206550,301078702&chds=0,431107964&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:39798066,196364847,371049615,23751727,97825112,127880351,142828145,224693206,288327386&chds=0,371049615&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 #### Client VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:83360132,325777324,6273470647,66804042,197249533,1483146277,4615079935,2084145078,2142319655&chds=0,6273470647&chxl=0:|Constructor - ReflectASM|Constructor - Direct|Constructor - Reflection|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:78127351,373011028,6090870837,64646437,233816059,1426909603,1983121202,2076906030,4429104410&chds=0,6090870837&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 
 ## Usage
@@ -51,7 +46,7 @@ Method reflection with ReflectASM:
 
 ```java
 SomeClass someObject = ...
-MethodAccess access = MethodAccess.get(SomeClass.class);
+MethodAccess access = MethodAccess.access(SomeClass.class);
 access.invoke(someObject, "setName", "Awesome McLovin");
 String name = (String)access.invoke(someObject, "getName");
 ```
@@ -60,23 +55,23 @@ Field reflection with ReflectASM:
 
 ```java
 SomeClass someObject = ...
-FieldAccess access = FieldAccess.get(SomeClass.class);
+FieldAccess access = FieldAccess.access(SomeClass.class);
 access.set(someObject, "name", "Awesome McLovin");
-String name = (String)access.get(someObject, "name");
+String name = (String)access.access(someObject, "name");
 ```
 
 Constructor reflection with ReflectASM:
 
 ```java
-ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class);
+ConstructorAccess<SomeClass> access = ConstructorAccess.access(SomeClass.class);
 SomeClass someObject = access.newInstance();
 ```
 
-Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAccess):
+Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAccess, {}=Array):
 
 | ClassAccess.*method* | Equivalent | Discription |
 | -------------------- | ---------- | ----------- | 
-| *static* get(Class,[dump dir]) | (F/M/C).get | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
+| *static* access(Class,[dump dir]) | (F/M/C).access | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
 | IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
 | IndexOf(name,type)| | returns the first element of `IndexesOf`|
 | IndexOfField(String/Field) | F.getIndex | returns the field index that matches the given input|
@@ -86,16 +81,19 @@ Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAcces
 | set(instance,Name/index,value) | F.set | Assign value to the specific field |
 | set*Primative*(instance,index,value) | F.set*Primative* | Assign primitive value to the specific field, *primitive* here can be `Integer/Long/Double/etc`  |
 | get(instance,name/index) | F.get | Get field value |
-| get*Primative*(instance,index) | F.get*Primative* | Get field value and convert to target primitive type|
-| get(instance,name/index, Class) | F.get | Get field value and convert to target class type|
-| invoke(instance,name/index,{args}) | M.invoke | Execute method |
-| invokeWithWithTypes(instance,name/index,{argTypes},{args}) | M.invokeWithWithTypes | Invoke method by specifying parameter types in order to position the accurate constructor|
+| get*Primative*(instance,index) | F.get*Primative* | Get field value and cast to target primitive type|
+| get(instance,name/index, Class) | F.get | Get field value and cast to target class type|
+| invoke(instance,name,{args}) | M.invoke | Executes  method |
+| invokeWithIndex(instance,index,{args}) | M.invokeWithIndex | Executes method by specifying the exact index|
+| invokeWithWithTypes(instance,name/index,{argTypes},{args}) | M.invokeWithWithTypes | Invokes method by specifying parameter types in order to position the accurate method|
 | newInstance() | C.newInstance | Create underlying Object |
 | newInstance({args}) | C.newInstance | Create underlying Object |
 | newInstanceWithIndex(index,{args}) | C.newInstanceWithIndex | Create underlying Object with the specific constructor index|
 | newInstanceWithTypes({argTypes},{args}) | C.newInstanceWithTypes | Create underlying Object by specifying parameter types in order to position the accurate constructor|
-| getInfo/setInfo || Get/set the underlying `ClassInfo`|
-
+| getInfo || Get the underlying `ClassInfo`|
+| *accessor.*newInstanceWithIndex| | Directly initializes the instance without validating/auto-casting the input arguments|
+| *accessor.*invokeWithIndex| | Directly invokes the method without validating/auto-casting the input arguments|
+| *accessor.*set/get| | Directly set/get the field without validating/auto-casting the input arguments|
 
 Other static fields:
 * `ClassAccess.ACCESS_CLASS_PREFIX`: the prefix of the dynamic class name(format is `<prefix>.<underlying_class_full_name>`), the default value is `asm.`
@@ -108,16 +106,16 @@ For maximum performance when methods or fields are accessed repeatedly, the meth
 
 ```java
 SomeClass someObject = ...
-MethodAccess access = MethodAccess.get(SomeClass.class);
+MethodAccess access = MethodAccess.access(SomeClass.class);
 int addNameIndex = access.getIndex("addName");
 for (String name : names)
-    access.invoke(someObject, addNameIndex, "Awesome McLovin");
+    access.invokeWithIndex(someObject, addNameIndex, "Awesome McLovin");
 ```
 
 Iterate all fields:
 
 ```java
-FieldAccess access = FieldAccess.get(SomeClass.class);
+FieldAccess access = FieldAccess.access(SomeClass.class);
 for(int i = 0, n = access.getFieldCount(); i < n; i++) {
     access.set(instanceObject, i, valueToPut);              
 }

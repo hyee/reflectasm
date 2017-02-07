@@ -4,7 +4,7 @@ import junit.framework.TestCase;
 
 public class ConstructorAccessTest extends TestCase {
     public void testNewInstance() {
-        ConstructorAccess<SomeClass> access = ConstructorAccess.get(SomeClass.class, ".");
+        ConstructorAccess<SomeClass> access = ConstructorAccess.access(SomeClass.class, ".");
         SomeClass someObject = new SomeClass();
         assertEquals(someObject, access.newInstance());
         assertEquals(someObject, access.newInstance());
@@ -12,7 +12,7 @@ public class ConstructorAccessTest extends TestCase {
     }
 
     public void testPackagePrivateNewInstance() {
-        ConstructorAccess<PackagePrivateClass> access = ConstructorAccess.get(PackagePrivateClass.class);
+        ConstructorAccess<PackagePrivateClass> access = ConstructorAccess.access(PackagePrivateClass.class);
         PackagePrivateClass someObject = new PackagePrivateClass();
         assertEquals(someObject, access.newInstance());
         assertEquals(someObject, access.newInstance());
@@ -21,16 +21,16 @@ public class ConstructorAccessTest extends TestCase {
 
     public void testHasArgumentConstructor() {
         HasArgumentConstructor someObject = new HasArgumentConstructor("bla");
-        ConstructorAccess<HasArgumentConstructor> access = ConstructorAccess.get(HasArgumentConstructor.class, ".");
+        ConstructorAccess<HasArgumentConstructor> access = ConstructorAccess.access(HasArgumentConstructor.class, ".");
         assertEquals(someObject, access.newInstance("bla"));
         int index = access.getIndex(String.class);
         assertEquals(someObject, access.newInstanceWithIndex(index, "bla"));
         assertEquals(someObject, access.newInstanceWithTypes(new Class[]{String.class}, "bla"));
-        assertEquals((int) (access.accessor.get(access.newInstance(1), "y")), 1);
+        assertEquals((int) (access.console.get(access.newInstance(1), "y")), 1);
     }
 
     public void testHasPrivateConstructor() {
-        ConstructorAccess<HasPrivateConstructor> access = ConstructorAccess.get(HasPrivateConstructor.class);
+        ConstructorAccess<HasPrivateConstructor> access = ConstructorAccess.access(HasPrivateConstructor.class);
         HasPrivateConstructor someObject = new HasPrivateConstructor();
         assertEquals(someObject, access.newInstance());
         assertEquals(someObject, access.newInstance());
@@ -39,7 +39,7 @@ public class ConstructorAccessTest extends TestCase {
 
     public void testHasProtectedConstructor() {
         try {
-            ConstructorAccess<HasProtectedConstructor> access = ConstructorAccess.get(HasProtectedConstructor.class);
+            ConstructorAccess<HasProtectedConstructor> access = ConstructorAccess.access(HasProtectedConstructor.class);
             HasProtectedConstructor newInstance = access.newInstance();
             assertEquals("cow", newInstance.getMoo());
         } catch (Throwable t) {
@@ -50,7 +50,7 @@ public class ConstructorAccessTest extends TestCase {
 
     public void testHasPackageProtectedConstructor() {
         try {
-            ConstructorAccess<HasPackageProtectedConstructor> access = ConstructorAccess.get(HasPackageProtectedConstructor.class);
+            ConstructorAccess<HasPackageProtectedConstructor> access = ConstructorAccess.access(HasPackageProtectedConstructor.class);
             HasPackageProtectedConstructor newInstance = access.newInstance();
             assertEquals("cow", newInstance.getMoo());
         } catch (Throwable t) {
@@ -61,7 +61,7 @@ public class ConstructorAccessTest extends TestCase {
 
     public void testHasPublicConstructor() {
         try {
-            ConstructorAccess<HasPublicConstructor> access = ConstructorAccess.get(HasPublicConstructor.class);
+            ConstructorAccess<HasPublicConstructor> access = ConstructorAccess.access(HasPublicConstructor.class);
             HasPublicConstructor newInstance = access.newInstance();
             assertEquals("cow", newInstance.getMoo());
         } catch (Throwable t) {

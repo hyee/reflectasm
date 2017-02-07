@@ -3,6 +3,7 @@ package com.esotericsoftware.reflectasm;
 import junit.framework.TestCase;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -12,10 +13,10 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvoke() {
-        MethodAccess<SomeClass> access1 = MethodAccess.get(ConcurrentHashMap.class, ".");
+        MethodAccess<SomeClass> access1 = MethodAccess.access(ConcurrentHashMap.class, ".");
 
-        MethodAccess<SomeClass> access = MethodAccess.get(SomeClass.class, ".");
-        SomeClass someObject = access.accessor.newInstance();
+        MethodAccess<SomeClass> access = MethodAccess.access(SomeClass.class, ".");
+        SomeClass someObject = access.console.newInstance();
         Object value;
         value = access.invoke(someObject, "test");
         value = access.invoke(someObject, "getName");
@@ -37,8 +38,10 @@ public class MethodAccessTest extends TestCase {
         assertEquals(1234, value);
         value = access.invoke(someObject, "methodWithManyArguments", 6, 2f, null, null);
         assertEquals("test0", value);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true);
+        assertEquals("0", value);
         value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true, 1, 2, 3);
-        assertEquals("test1", value);
+        assertEquals(Arrays.toString(new int[]{1, 2, 3}), value);
         value = access.invoke(null, "staticMethod", "moo", 1234);
         assertEquals("meow! moo, 1234", value);
         //int methodWithVarArgs(char,Double,Long,Integer[])
@@ -53,7 +56,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        MethodAccess<EmptyClass> access = MethodAccess.get(EmptyClass.class, ".");
+        MethodAccess<EmptyClass> access = MethodAccess.access(EmptyClass.class, ".");
         try {
             access.getIndex("name");
             fail();
@@ -73,13 +76,13 @@ public class MethodAccessTest extends TestCase {
             // expected.printStackTrace();
         }
         try {
-            access.invoke(new EmptyClass(), 0);
+            access.invokeWithIndex(new EmptyClass(), 0);
             fail();
         } catch (IllegalArgumentException expected) {
             // expected.printStackTrace();
         }
         try {
-            access.invoke(new EmptyClass(), 0, "moo");
+            access.invokeWithIndex(new EmptyClass(), 0, "moo");
             fail();
         } catch (IllegalArgumentException expected) {
             // expected.printStackTrace();
@@ -87,16 +90,16 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvokeInterface() {
-        MethodAccess access = MethodAccess.get(ConcurrentMap.class);
+        MethodAccess access = MethodAccess.access(ConcurrentMap.class);
         ConcurrentHashMap<String, String> someMap = new ConcurrentHashMap<String, String>();
         someMap.put("first", "one");
         someMap.put("second", "two");
         Object value;
 
-        // invoke a method declared directly in the ConcurrentMap interface
+        // invokeWithIndex a method declared directly in the ConcurrentMap interface
         value = access.invoke(someMap, "replace", "first", "foo");
         assertEquals("one", value);
-        // invoke a method declared in the Map superinterface
+        // invokeWithIndex a method declared in the Map superinterface
         value = access.invoke(someMap, "size");
         assertEquals(someMap.size(), value);
     }
@@ -150,7 +153,8 @@ public class MethodAccessTest extends TestCase {
         }
 
         public String methodWithManyArguments(int i, float f, Integer[] I, Float F, SomeClass[] c1, Boolean x, int... y) {
-            return "test1";
+            if (y.length == 0) return "0";
+            return Arrays.toString(y);
         }
 
         public int methodWithVarArgs(char a, Double b, Long c, Integer... d) {
