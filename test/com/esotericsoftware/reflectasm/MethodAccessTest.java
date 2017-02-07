@@ -40,6 +40,7 @@ public class MethodAccessTest extends TestCase {
         assertEquals("test0", value);
         value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true);
         assertEquals("0", value);
+        value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true, new int[]{1, 2, 3});
         value = access.invoke(someObject, "methodWithManyArguments", "1", 2f, new int[]{3, 4}, 4.2f, null, true, 1, 2, 3);
         assertEquals(Arrays.toString(new int[]{1, 2, 3}), value);
         value = access.invoke(null, "staticMethod", "moo", 1234);
@@ -146,6 +147,10 @@ public class MethodAccessTest extends TestCase {
         public void setValue(int intValue, Boolean bu) {
             this.intValue = intValue;
             this.bu = bu;
+        }
+
+        public String methodWithManyArguments(int i, float f, Integer[] I, int c1) {
+            return "test0";
         }
 
         public String methodWithManyArguments(int i, float f, Integer[] I, SomeClass[] c1) {

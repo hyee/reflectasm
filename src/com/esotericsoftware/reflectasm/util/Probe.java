@@ -122,29 +122,4 @@ public class Probe {
         }
         System.out.println(sb.toString());
     }
-
-    public String[] chart(String title) {
-        ArrayList<Entry> list = new ArrayList(times.entrySet());
-        //Collections.sort(list, comparator);
-        StringBuilder names = new StringBuilder(512);
-        StringBuilder times = new StringBuilder(512);
-        long max = 0;
-        int count = 0;
-        for (Entry<String, Long> entry : list) {
-            String name = entry.getKey();
-            names.insert(0, '|');
-            names.insert(0, name);
-            long time = entry.getValue();
-            times.append(time);
-            times.append(',');
-            max = Math.max(max, time);
-            count++;
-        }
-        times.setLength(times.length() - 1);
-        names.setLength(names.length() - 1);
-        int height = count * 18 + 21;
-        int width = Math.min(700, 300000 / height);
-        System.out.println("![](http://chart.apis.google.com/chart?chtt=" + title + "&" + "chs=" + width + "x" + height + "&chd=t:" + times + "&chds=0," + max + "&chxl=0:|" + names + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666)\n");
-        return new String[]{times.toString(), String.valueOf(max), names.toString()};
-    }
 }

@@ -79,10 +79,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 map.get(attr).add(j);
             }
         }
-        for (String key : map.keySet()) {
-            Integer[] indexes = map.get(key).toArray(new Integer[]{});
-            info.attrIndex.put(key, indexes);
-        }
+        for (String key : map.keySet())
+            info.attrIndex.put(key, map.get(key).toArray(new Integer[]{}));
     }
 
     /**
@@ -170,7 +168,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             for (int i = 0; i < n; i++) {
                 Constructor<?> c = constructors.get(i);
                 info.constructorModifiers[i] = c.getModifiers();
-                if (c.isVarArgs()) info.methodModifiers[i] += MODIFIER_VARARGS;
+                if (c.isVarArgs()) info.constructorModifiers[i] += MODIFIER_VARARGS;
                 info.constructorParamTypes[i] = c.getParameterTypes();
                 info.constructorDescs[i] = Type.getConstructorDescriptor(c);
             }
@@ -864,7 +862,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 if (targetIndex != null) {
                     minDistance = targetIndex / 10000;
                     targetIndex = targetIndex % 10000;
-                    if (10000 - targetIndex == 1) result = -1;
+                    if (10000 - targetIndex == 1) result = -2;
                     else for (int index : candidates)
                         if (index == targetIndex) result = index;
                 }
@@ -895,7 +893,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 }
                 if (argCount > last && isVarArgs) {
                     thisDistance += stepSize;
-                    if (IS_STRICT_CONVERT) {
+                    if (!IS_STRICT_CONVERT) {
                         int dis = 5;
                         final Class arrayType = paramTypes[index][last].getComponentType();
                         for (int i = last; i < argCount; i++) {
@@ -918,10 +916,10 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             if (IS_CACHED) {
                 lock.writeLock().lock();
                 lockFlag |= 2;
-                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + result));
+                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + Math.max(-1,result)));
             }
-            if (result != -1 && argCount == 0 && paramTypes[result].length == 0) return result;
-            if (result == -1 || minDistance == 0 //
+            if (result >=0 && argCount == 0 && paramTypes[result].length == 0) return result;
+            if (result <0 || minDistance == 0 //
                     || (argCount < paramTypes[result].length && !isVarArgs(modifiers[result])) //
                     || (isVarArgs(modifiers[result]) && argCount < paramTypes[result].length - 1)) {
                 String str = "Unable to apply " + (methodName.equals(CONSTRUCTOR_ALIAS) ? "constructor" : "method") + ":\n    " + typesToString(methodName, argTypes) //
@@ -1025,7 +1023,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             }
         } catch (Exception e) {
             if (isNonStaticMemberClass() && (args[0] == null || args[0].getClass() != classInfo.baseClass.getEnclosingClass()))
-                throw new IllegalArgumentException("Cannot initialize a non-static inner class " + classInfo.baseClass.getCanonicalName() + " without specifing the enclosing instance!");
+                throw new IllegalArgumentException("Cannot initialize a non-static inner class " + classInfo.baseClass.getCanonicalName() + " without specifying the enclosing instance!");
             String methodName = getMethodNameByParamTypes(paramTypes);
             throw new IllegalArgumentException("Data conversion error when invoking method: " + e.getMessage()//
                     + "\n    " + typesToString(methodName, args) //
@@ -1085,7 +1083,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     }
 
     public void set(ANY instance, int fieldIndex, Object value) {
-        if (IS_STRICT_CONVERT) try {
+        if (!IS_STRICT_CONVERT) try {
             value = convert(value, classInfo.fieldTypes[fieldIndex]);
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format("Unable to set field '%s.%s' as '%s': %s ",  //
@@ -1140,7 +1138,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public <T> T get(ANY instance, int fieldIndex, Class<T> clz) {
         Object value = accessor.get(instance, fieldIndex);
-        if (IS_STRICT_CONVERT) try {
+        if (!IS_STRICT_CONVERT) try {
             value = convert(value, clz);
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format("Unable to set field '%s' as '%s': %s ", classInfo.fieldNames[fieldIndex], value == null ? "null" : value.getClass().getCanonicalName(), e.getMessage()));

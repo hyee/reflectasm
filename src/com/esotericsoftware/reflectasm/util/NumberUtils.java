@@ -72,7 +72,7 @@ public abstract class NumberUtils {
     private static <T> T convertOrGetDistance(Object from, Class toClass, final boolean isGetDistance) {
         //return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
-        if (from == null) return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? 0 : 5) : null);
+        if (from == null) return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? -1 : 5) : null);
         Class clz;
         boolean isClass = false;
         if (!(from instanceof Class)) clz = from.getClass();
@@ -99,7 +99,7 @@ public abstract class NumberUtils {
             if (STANDARD_NUMBER_TYPES.contains(clz))
                 return (T) (isGetDistance ? Integer.valueOf(4) : isClass ? toClass : convertNumberToTargetClass((Number) from, toClass));
             if (clz == String.class)
-                return (T) (isGetDistance ? Integer.valueOf(1) : isClass ? toClass : parseNumber((String) from, toClass));
+                return (T) (isGetDistance ? Integer.valueOf(1) : isClass ? clz : parseNumber((String) from, toClass));
             if (clz == Character.class || clz == char.class)
                 return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : convertNumberToTargetClass(Character.digit((char) from, 10), toClass));
         }
@@ -107,7 +107,7 @@ public abstract class NumberUtils {
             if (STANDARD_NUMBER_TYPES.contains(clz))
                 return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : Character.forDigit(((Number) from).intValue(), 10));
             if (clz == String.class) {
-                if (isClass) return (T) (isGetDistance ? Integer.valueOf(3) : toClass);
+                if (isClass) return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? clz:toClass);
                 if (((String) from).length() == 1)
                     return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : ((String) from).charAt(0));
             }
