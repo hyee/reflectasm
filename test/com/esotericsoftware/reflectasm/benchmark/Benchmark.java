@@ -7,10 +7,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class Benchmark {
-    public boolean warmup = true;
-    public Map<String, Long> testTimes = new TreeMap<>();
     static int testRounds = 300000;
     static int testCount = 100;
+    public boolean warmup = true;
+    public Map<String, Long> testTimes = new TreeMap<>();
     private long s;
 
     public void start() {

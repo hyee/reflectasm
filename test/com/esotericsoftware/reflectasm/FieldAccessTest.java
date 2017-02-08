@@ -10,7 +10,6 @@
  * <p>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.esotericsoftware.reflectasm;
 
 import junit.framework.TestCase;
@@ -28,7 +27,7 @@ public class FieldAccessTest extends TestCase {
         assertEquals(0, test.intValue);
         access.set(test, "intValue", 1234);
         assertEquals(1234, test.intValue);
-        assertEquals(1234, access.get(test, "intValue"));
+        assertEquals(1234, (int) access.get(test, "intValue"));
     }
 
     public void testIndexSetAndGet() {
@@ -112,10 +111,6 @@ public class FieldAccessTest extends TestCase {
     static public class SomeClass {
         public String name;
         public int intValue;
-        protected float test1;
-        Float test2;
-        private String test3;
-
         public boolean booleanField;
         public byte byteField;
         public char charField;
@@ -124,6 +119,9 @@ public class FieldAccessTest extends TestCase {
         public long longField;
         public float floatField;
         public double doubleField;
+        protected float test1;
+        Float test2;
+        private String test3;
     }
 
     static public class EmptyClass {}

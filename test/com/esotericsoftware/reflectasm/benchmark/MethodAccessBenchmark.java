@@ -38,17 +38,19 @@ public class MethodAccessBenchmark extends Benchmark {
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = method.invoke(someObject, args);
-
         }
         end("Method Call - Reflection");
         start();
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = someObject.getName();
-
         }
         end("Method Call - Direct");
         result = chart("Method Call");
+    }
+
+    public static void main(String[] args) throws Exception {
+        new MethodAccessBenchmark();
     }
 
     static public class SomeClass {
@@ -57,9 +59,5 @@ public class MethodAccessBenchmark extends Benchmark {
         public String getName() {
             return name;
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        new MethodAccessBenchmark();
     }
 }

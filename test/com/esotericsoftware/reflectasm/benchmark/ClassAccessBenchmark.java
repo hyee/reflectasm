@@ -60,7 +60,7 @@ public class ClassAccessBenchmark {
                             //=====================
                             case 4:
                                 asm.set(obj, fieldIndex, val);
-                                val = (int) asm.get(obj, fieldIndex);
+                                val = asm.get(obj, fieldIndex);
                                 break;
                             case 5:
                                 field.set(obj, val);

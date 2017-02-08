@@ -91,7 +91,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvokeInterface() {
-        MethodAccess access = MethodAccess.access(ConcurrentMap.class);
+        MethodAccess<ConcurrentMap> access = MethodAccess.access(ConcurrentMap.class);
         ConcurrentHashMap<String, String> someMap = new ConcurrentHashMap<String, String>();
         someMap.put("first", "one");
         someMap.put("second", "two");
@@ -105,20 +105,17 @@ public class MethodAccessTest extends TestCase {
         assertEquals(someMap.size(), value);
     }
 
-    static public class EmptyClass {
-
-    }
+    static public class EmptyClass {}
 
     static public class baseClass extends EmptyClass {
         public void test() {}
-
     }
 
     static public class SomeClass extends baseClass {
+        public static boolean x;
+        static boolean bu;
         String name;
         private int intValue;
-        static boolean bu;
-        public static boolean x;
 
         public SomeClass() {
 
@@ -130,6 +127,10 @@ public class MethodAccessTest extends TestCase {
 
         public SomeClass(String x) {
 
+        }
+
+        static public String staticMethod(String a, int b) {
+            return "meow! " + a + ", " + b;
         }
 
         public String getName() {
@@ -164,10 +165,6 @@ public class MethodAccessTest extends TestCase {
 
         public int methodWithVarArgs(char a, Double b, Long c, Integer... d) {
             return d == null ? 0 : d.length;
-        }
-
-        static public String staticMethod(String a, int b) {
-            return "meow! " + a + ", " + b;
         }
     }
 }

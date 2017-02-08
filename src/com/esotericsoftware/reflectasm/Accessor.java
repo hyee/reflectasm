@@ -1,15 +1,15 @@
 package com.esotericsoftware.reflectasm;
 
-public interface Accessor<T> {
+public interface Accessor<ANY> {
     abstract public ClassInfo getInfo();
 
-    abstract public T newInstanceWithIndex(int constructorIndex, Object... args);
+    abstract public ANY newInstanceWithIndex(int constructorIndex, Object... args);
 
-    abstract public T newInstance();
+    abstract public ANY newInstance();
 
-    abstract public Object invokeWithIndex(T instance, int methodIndex, Object... args);
+    abstract public <T> T invokeWithIndex(ANY instance, int methodIndex, Object... args);
 
-    abstract public void set(T instance, int fieldIndex, Object value);
+    abstract public void set(ANY instance, int fieldIndex, Object value);
 
-    abstract public Object get(T instance, int fieldIndex);
+    abstract public <T> T get(ANY instance, int fieldIndex);
 }

@@ -23,24 +23,25 @@ To support Java 7, just change the imports in class `ClassAccess` to add back th
 ReflectASM is a very small Java library that provides high performance reflection by using code generation. An access class is generated to set/get fields, call methods, or create a new instance. The access class uses bytecode rather than Java's reflection, so it is much faster. It can also access primitive fields via bytecode to avoid boxing.
 
 #### Summary of the cost(Smaller value means better performance)
-VM: Java 8u112 x86<br/>
-OS: Win10 x64<br/> 
+The benchmark code can be found in the `benchmark` directory, test environment:
+* VM : Java 8u112 x86<br/>
+* CPU: Intel I7-3820QM
+* OS : Win10 x64, and as a laptop, the result is not very stable<br/> 
 
 | VM | Item | Direct | ReflectASM | Reflection |
 | --- | --- |  ---------  |  ---------  |  ---------  |
-| Server VM | Field Set+Get | 1.33 ns | 6.55 ns | 12.37 ns |
-| Server VM | Method Call | 0.79 ns | 3.26 ns | 4.26 ns |
-| Server VM | Constructor | 4.76 ns | 7.49 ns | 9.61 ns |
-| Client VM | Field Set+Get | 2.60 ns | 12.43 ns | 203.03 ns |
-| Client VM | Method Call | 2.15 ns | 7.79 ns | 47.56 ns |
-| Client VM | Constructor | 66.10 ns | 69.23 ns | 147.64 ns |
+| Server VM | Field Set+Get | 1.16 ns | 7.27 ns | 13.12 ns |
+| Server VM | Method Call | 0.96 ns | 4.04 ns | 5.40 ns |
+| Server VM | Constructor | 4.88 ns | 8.22 ns | 11.12 ns |
+| Client VM | Field Set+Get | 2.82 ns | 14.59 ns | 211.06 ns |
+| Client VM | Method Call | 4.29 ns | 8.54 ns | 56.76 ns |
+| Client VM | Constructor | 68.97 ns | 71.01 ns | 159.61 ns |
 
 #### Server VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:39798066,196364847,371049615,23751727,97825112,127880351,142828145,224693206,288327386&chds=0,371049615&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:34724999,218048348,393533646,28842660,121195960,162035932,146342344,246506328,333601444&chds=0,393533646&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 #### Client VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:78127351,373011028,6090870837,64646437,233816059,1426909603,1983121202,2076906030,4429104410&chds=0,6090870837&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:84516770,437625535,6331921319,128672898,256204680,1702772131,2069235992,2130361766,4788436860&chds=0,6331921319&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 ## Usage
 

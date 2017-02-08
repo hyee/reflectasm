@@ -24,14 +24,12 @@ public class ConstructorAccessBenchmark extends Benchmark {
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = access.newInstance();
-
         }
         end("Constructor - ReflectASM");
         start();
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++)
                 dontCompileMeAway[ii] = type.newInstance();
-
         }
         end("Constructor - Reflection");
         start();
@@ -43,11 +41,11 @@ public class ConstructorAccessBenchmark extends Benchmark {
         result = chart("Constructor");
     }
 
-    static public class SomeClass {
-        public String name;
-    }
-
     public static void main(String[] args) throws Exception {
         new ConstructorAccessBenchmark();
+    }
+
+    static public class SomeClass {
+        public String name;
     }
 }

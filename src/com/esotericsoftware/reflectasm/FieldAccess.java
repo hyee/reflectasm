@@ -5,14 +5,18 @@ public class FieldAccess<ANY> {
     public final ClassAccess<ANY> console;
     public final ClassInfo classInfo;
 
-    @Override
-    public String toString() {
-        return console.toString();
-    }
-
     protected FieldAccess(ClassAccess<ANY> console) {
         this.console = console;
         this.classInfo = console.getInfo();
+    }
+
+    static public <ANY> FieldAccess access(Class<ANY> type, String... dumpFile) {
+        return new FieldAccess(ClassAccess.access(type, dumpFile));
+    }
+
+    @Override
+    public String toString() {
+        return console.toString();
     }
 
     public int getIndex(String fieldName) {
@@ -23,7 +27,7 @@ public class FieldAccess<ANY> {
         console.set(instance, fieldName, value);
     }
 
-    public Object get(ANY instance, String fieldName) {
+    public <T> T get(ANY instance, String fieldName) {
         return console.get(instance, fieldName);
     }
 
@@ -121,9 +125,5 @@ public class FieldAccess<ANY> {
 
     public String getString(ANY instance, int fieldIndex) {
         return (String) get(instance, fieldIndex);
-    }
-
-    static public <ANY> FieldAccess access(Class<ANY> type, String... dumpFile) {
-        return new FieldAccess(ClassAccess.access(type, dumpFile));
     }
 }

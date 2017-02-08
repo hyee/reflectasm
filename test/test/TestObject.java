@@ -4,10 +4,10 @@ package test;
  * Created by Will on 2017/2/7.
  */
 public class TestObject {
-    private long fi;
-    public Double fd;
     static String fs;
+    public Double fd;
     public int fl;
+    private long fi;
 
     public TestObject() {
         fs = "TestObject0";

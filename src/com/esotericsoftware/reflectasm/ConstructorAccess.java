@@ -7,14 +7,18 @@ public class ConstructorAccess<ANY> {
     public final ClassAccess<ANY> console;
     public final ClassInfo classInfo;
 
-    @Override
-    public String toString() {
-        return console.toString();
-    }
-
     protected ConstructorAccess(ClassAccess<ANY> console) {
         this.console = console;
         this.classInfo = console.getInfo();
+    }
+
+    static public <ANY> ConstructorAccess access(Class<ANY> type, String... dumpFile) {
+        return new ConstructorAccess<ANY>(ClassAccess.access(type, dumpFile));
+    }
+
+    @Override
+    public String toString() {
+        return console.toString();
     }
 
     public boolean isNonStaticMemberClass() {
@@ -55,9 +59,5 @@ public class ConstructorAccess<ANY> {
 
     public ANY newInstance(Object... args) {
         return console.newInstance(args);
-    }
-
-    static public <ANY> ConstructorAccess access(Class<ANY> type, String... dumpFile) {
-        return new ConstructorAccess<ANY>(ClassAccess.access(type, dumpFile));
     }
 }

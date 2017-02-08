@@ -10,9 +10,9 @@ public class FieldAccessBenchmark extends Benchmark {
     public FieldAccessBenchmark() throws Exception {
         final int count = Benchmark.testRounds;
         final int rounds = Benchmark.testCount;
-        Object[] dontCompileMeAway = new Object[count];
+        String[] dontCompileMeAway = new String[count];
 
-        FieldAccess access = FieldAccess.access(SomeClass.class);
+        FieldAccess<SomeClass> access = FieldAccess.access(SomeClass.class);
         SomeClass someObject = new SomeClass();
         int index = access.getIndex("name");
 
@@ -25,7 +25,7 @@ public class FieldAccessBenchmark extends Benchmark {
             }
             for (int ii = 0; ii < count; ii++) {
                 field.set(someObject, "first");
-                dontCompileMeAway[ii] = field.get(someObject);
+                dontCompileMeAway[ii] = (String) field.get(someObject);
             }
         }
         warmup = false;
@@ -41,7 +41,7 @@ public class FieldAccessBenchmark extends Benchmark {
         for (int i = 0; i < rounds; i++) {
             for (int ii = 0; ii < count; ii++) {
                 field.set(someObject, "first");
-                dontCompileMeAway[ii] = field.get(someObject);
+                dontCompileMeAway[ii] = (String) field.get(someObject);
             }
         }
         end("Field Set+Get - Reflection");
@@ -56,11 +56,11 @@ public class FieldAccessBenchmark extends Benchmark {
         result = chart("Field Set/Get");
     }
 
-    static public class SomeClass {
-        public String name;
-    }
-
     public static void main(String[] args) throws Exception {
         new FieldAccessBenchmark();
+    }
+
+    static public class SomeClass {
+        public String name;
     }
 }

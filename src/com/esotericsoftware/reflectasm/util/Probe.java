@@ -5,17 +5,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Probe {
     public static Probe p = new Probe();
-
-    public static void mark_(String tag) {p.mark(tag);}
-
-    public static void clear_() {p.clear();}
-
-    public static void end_() {p.end();}
-
-    public static void print_() {p.print();}
-
-    public static void reset_() {p.reset();}
-
+    static Comparator<Object[]> comparator = new Comparator<Object[]>() {
+        public int compare(Object[] o1, Object[] o2) {
+            return ((Long) ((Long) o2[1] - (Long) o1[1])).intValue();
+        }
+    };
     public boolean warmup = true;
     public Map<String, Long[]> times = new HashMap(10);
     private long s;
@@ -27,11 +21,15 @@ public class Probe {
     private ArrayDeque<Object[]> queue = new ArrayDeque();
     private ReentrantLock lock = new ReentrantLock();
 
-    static Comparator<Object[]> comparator = new Comparator<Object[]>() {
-        public int compare(Object[] o1, Object[] o2) {
-            return ((Long) ((Long) o2[1] - (Long) o1[1])).intValue();
-        }
-    };
+    public static void mark_(String tag) {p.mark(tag);}
+
+    public static void clear_() {p.clear();}
+
+    public static void end_() {p.end();}
+
+    public static void print_() {p.print();}
+
+    public static void reset_() {p.reset();}
 
     public void mark(String tag) {
         if (warmup) return;

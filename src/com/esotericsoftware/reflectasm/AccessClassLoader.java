@@ -28,6 +28,10 @@ class AccessClassLoader extends ClassLoader {
     static private volatile AccessClassLoader selfContextAccessClassLoader = new AccessClassLoader(selfContextParentClassLoader);
     static private volatile Method defineClassMethod;
 
+    private AccessClassLoader(ClassLoader parent) {
+        super(parent);
+    }
+
     static AccessClassLoader get(Class type) {
         ClassLoader parent = getParentClassLoader(type);
         // 1. fast-path:
@@ -73,31 +77,6 @@ class AccessClassLoader extends ClassLoader {
         return sz;
     }
 
-    private AccessClassLoader(ClassLoader parent) {
-        super(parent);
-    }
-
-    protected java.lang.Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        // These classes come from the classloader that loaded AccessClassLoader.
-        if (name.equals(ClassAccess.class.getName())) return ClassAccess.class;
-        if (name.equals(FieldAccess.class.getName())) return FieldAccess.class;
-        if (name.equals(MethodAccess.class.getName())) return MethodAccess.class;
-        if (name.equals(ConstructorAccess.class.getName())) return ConstructorAccess.class;
-        if (name.equals(PublicConstructorAccess.class.getName())) return PublicConstructorAccess.class;
-        // All other classes come from the classloader that loaded the type we are accessing.
-        return super.loadClass(name, resolve);
-    }
-
-    Class<?> defineClass(String name, byte[] bytes) throws ClassFormatError {
-        try {
-            // Attempt to load the access class in the same loader, which makes protected and default access members accessible.
-            return (Class<?>) getDefineClassMethod().invoke(getParent(), new Object[]{name, bytes, Integer.valueOf(0), Integer.valueOf(bytes.length), getClass().getProtectionDomain()});
-        } catch (Exception ignored) {
-            // continue with the definition in the current loader (won't have access to protected and package-protected members)
-        }
-        return defineClass(name, bytes, 0, bytes.length, getClass().getProtectionDomain());
-    }
-
     // As per JLS, section 5.3,
     // "The runtime package of a class or interface is determined by the package name and defining class loader of the class or interface."
     static boolean areInSameRuntimeClassLoader(Class type1, Class type2) {
@@ -136,5 +115,26 @@ class AccessClassLoader extends ClassLoader {
             }
         }
         return defineClassMethod;
+    }
+
+    protected java.lang.Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        // These classes come from the classloader that loaded AccessClassLoader.
+        if (name.equals(ClassAccess.class.getName())) return ClassAccess.class;
+        if (name.equals(FieldAccess.class.getName())) return FieldAccess.class;
+        if (name.equals(MethodAccess.class.getName())) return MethodAccess.class;
+        if (name.equals(ConstructorAccess.class.getName())) return ConstructorAccess.class;
+        if (name.equals(PublicConstructorAccess.class.getName())) return PublicConstructorAccess.class;
+        // All other classes come from the classloader that loaded the type we are accessing.
+        return super.loadClass(name, resolve);
+    }
+
+    Class<?> defineClass(String name, byte[] bytes) throws ClassFormatError {
+        try {
+            // Attempt to load the access class in the same loader, which makes protected and default access members accessible.
+            return (Class<?>) getDefineClassMethod().invoke(getParent(), new Object[]{name, bytes, Integer.valueOf(0), Integer.valueOf(bytes.length), getClass().getProtectionDomain()});
+        } catch (Exception ignored) {
+            // continue with the definition in the current loader (won't have access to protected and package-protected members)
+        }
+        return defineClass(name, bytes, 0, bytes.length, getClass().getProtectionDomain());
     }
 }

@@ -31,14 +31,14 @@ import java.util.*;
  * @since 1.1.2
  */
 public abstract class NumberUtils {
-    private static final BigInteger LONG_MIN = BigInteger.valueOf(Long.MIN_VALUE);
-    private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
     /**
      * Standard number types (all immutable):
      * Byte, Short, Integer, Long, BigInteger, Float, Double, BigDecimal.
      */
     public static final Set<Class<?>> STANDARD_NUMBER_TYPES;
     public static final Map<String, Class<?>> namePrimitiveMap = new HashMap<>();
+    private static final BigInteger LONG_MIN = BigInteger.valueOf(Long.MIN_VALUE);
+    private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
     static {
         namePrimitiveMap.put("boolean", Boolean.class);
