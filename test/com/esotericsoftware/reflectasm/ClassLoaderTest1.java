@@ -22,7 +22,7 @@ import java.io.InputStream;
 public class ClassLoaderTest1 extends TestCase {
     public void testDifferentClassloaders() throws Exception {
         // This classloader can see only the Test class and core Java classes.
-        ClassLoader testClassLoader = new TestClassLoader1();
+        ClassLoader testClassLoader = new TestClassLoader1<Test>();
         Class testClass = testClassLoader.loadClass(Test.class.getName());
         Object testObject = testClass.newInstance();
 
@@ -125,11 +125,11 @@ public class ClassLoaderTest1 extends TestCase {
         }
     }
 
-    static public class TestClassLoader1 extends ClassLoader {
-        protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    static public class TestClassLoader1<T> extends ClassLoader {
+        protected synchronized Class<T> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             Class c = findLoadedClass(name);
             if (c != null) return c;
-            if (name.startsWith("java.")) return super.loadClass(name, resolve);
+            if (name.startsWith("java.")) return (Class<T>) super.loadClass(name, resolve);
             if (!name.equals(Test.class.getName()))
                 throw new ClassNotFoundException("Class not found on purpose: " + name);
             ByteArrayOutputStream output = new ByteArrayOutputStream(32 * 1024);
@@ -152,7 +152,7 @@ public class ClassLoaderTest1 extends TestCase {
                 }
             }
             byte[] buffer = output.toByteArray();
-            return defineClass(name, buffer, 0, buffer.length);
+            return (Class<T>) defineClass(name, buffer, 0, buffer.length);
         }
     }
 

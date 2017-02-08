@@ -6,11 +6,12 @@ package com.esotericsoftware.reflectasm;
 
 import java.util.Map;
 
-public class ClassInfo {
+public class ClassInfo<ANY> {
     public int bucket;
-    public String[] fieldNames = null;
+    public String[] fieldNames;
     public Class[] fieldTypes;
     public Integer[] fieldModifiers;
+    public Long[] fieldAddrs;
     public String[] methodNames;
     public Class[][] methodParamTypes;
     public Class[] returnTypes;
@@ -18,7 +19,7 @@ public class ClassInfo {
     public Integer[] constructorModifiers;
     public Class[][] constructorParamTypes;
     public boolean isNonStaticMemberClass;
-    public Class baseClass;
+    public Class<ANY> baseClass;
     public int methodCount;
     public int fieldCount;
     public int constructorCount;

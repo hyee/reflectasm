@@ -79,6 +79,7 @@ class AccessClassLoader extends ClassLoader {
 
     protected java.lang.Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         // These classes come from the classloader that loaded AccessClassLoader.
+        if (name.equals(ClassAccess.class.getName())) return ClassAccess.class;
         if (name.equals(FieldAccess.class.getName())) return FieldAccess.class;
         if (name.equals(MethodAccess.class.getName())) return MethodAccess.class;
         if (name.equals(ConstructorAccess.class.getName())) return ConstructorAccess.class;
@@ -117,7 +118,9 @@ class AccessClassLoader extends ClassLoader {
 
     private static ClassLoader getParentClassLoader(Class type) {
         ClassLoader parent = type.getClassLoader();
-        if (parent == null) parent = ClassLoader.getSystemClassLoader();
+        if (parent == null) {
+            parent = ClassLoader.getSystemClassLoader();
+        }
         return parent;
     }
 

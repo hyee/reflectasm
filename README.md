@@ -22,7 +22,9 @@ To support Java 7, just change the imports in class `ClassAccess` to add back th
 
 ReflectASM is a very small Java library that provides high performance reflection by using code generation. An access class is generated to set/get fields, call methods, or create a new instance. The access class uses bytecode rather than Java's reflection, so it is much faster. It can also access primitive fields via bytecode to avoid boxing.
 
-#### Summary of the cost(Smaller value means better performane)
+#### Summary of the cost(Smaller value means better performance)
+VM: Java 8u112 x86<br/>
+OS: Win10 x64<br/> 
 
 | VM | Item | Direct | ReflectASM | Reflection |
 | --- | --- |  ---------  |  ---------  |  ---------  |

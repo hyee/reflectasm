@@ -18,7 +18,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond", "ConstantConditions", "Unsafe"})
 public class ClassAccess<ANY> implements Accessor<ANY> {
-    public final static int HASH_BUCKETS = 8;
+    public final static int HASH_BUCKETS = 16;
     public final static int MODIFIER_VARARGS = 262144;
     public final static String CONSTRUCTOR_ALIAS = "<new>";
     public final static String CONSTRUCTOR_ALIAS_ESCAPE = "\3\2\1" + CONSTRUCTOR_ALIAS + "\1\2\3";
@@ -28,7 +28,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     public static boolean IS_CACHED = true;
     public static boolean IS_STRICT_CONVERT = false;
     public static boolean IS_DEBUG = false;
-    static HashMap[] caches = null;
+    static HashMap[] caches = new HashMap[HASH_BUCKETS];
     static ReentrantReadWriteLock[] locks = new ReentrantReadWriteLock[HASH_BUCKETS];
     static final String thisPath = Type.getInternalName(ClassAccess.class);
     static final String accessorPath = Type.getInternalName(Accessor.class);
@@ -36,18 +36,15 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     static {
         if (System.getProperty("reflectasm.is_cache", "true").toLowerCase().equals("false")) IS_CACHED = false;
-        else {
-            caches = new HashMap[HASH_BUCKETS];
-            for (int i = 0; i < HASH_BUCKETS; i++) caches[i] = new HashMap(HASH_BUCKETS);
-        }
-        for (int i = 0; i < HASH_BUCKETS; i++) locks[i] = new ReentrantReadWriteLock();
         if (System.getProperty("reflectasm.is_debug", "false").toLowerCase().equals("true")) IS_DEBUG = true;
         if (System.getProperty("reflectasm.is_strict_convert", "false").toLowerCase().equals("true"))
             IS_STRICT_CONVERT = true;
+        for (int i = 0; i < HASH_BUCKETS; i++) caches[i] = new HashMap(HASH_BUCKETS);
+        for (int i = 0; i < HASH_BUCKETS; i++) locks[i] = new ReentrantReadWriteLock();
     }
 
-    protected ClassAccess(ClassInfo info, Accessor accessor) {
-        this.classInfo = info;
+    protected ClassAccess(Accessor accessor) {
+        this.classInfo = accessor.getInfo();
         this.accessor = accessor;
     }
 
@@ -57,13 +54,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public static int activeAccessClassLoaders() {return AccessClassLoader.activeAccessClassLoaders();}
 
-    /**
-     * Indexing the fields/methods/constructors for the underlying class
-     *
-     * @param info
-     */
-    public static void buildIndex(ClassInfo info) {
-        if (info == null || info.attrIndex != null) return;
+    public static ClassInfo buildIndex(int bucket) {
+        ClassInfo info = (ClassInfo) caches[bucket].get("ClassInfo");
         info.methodCount = info.methodNames.length;
         info.fieldCount = info.fieldNames.length;
         info.constructorCount = info.constructorModifiers.length;
@@ -81,6 +73,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         }
         for (String key : map.keySet())
             info.attrIndex.put(key, map.get(key).toArray(new Integer[]{}));
+        return info;
     }
 
     /**
@@ -90,11 +83,11 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
      */
     public static <ANY> ClassAccess access(Class<ANY> type, String... dumpFile) {
         String className = type.getName();
-        final String accessClassName = ACCESS_CLASS_PREFIX + className;
-        Class accessClass;
-        Accessor accessor;
+        final String accessClassName = (ACCESS_CLASS_PREFIX + className).replace("$", "");
+        Class<ANY> accessClass;
+        Accessor<ANY> accessor;
         ClassAccess self;
-        int bucket = type.hashCode() % HASH_BUCKETS;
+        int bucket = Math.abs(type.getName().hashCode()) % HASH_BUCKETS;
         ReentrantReadWriteLock lock = locks[bucket];
         final AccessClassLoader loader = AccessClassLoader.get(type);
         int lockFlag = 0;
@@ -102,35 +95,26 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             try {
                 lock.readLock().lock();
                 lockFlag |= 1;
-                if (IS_CACHED && caches[bucket].containsKey(type))
-                    if (caches[bucket].containsKey(type)) return (ClassAccess<ANY>) caches[bucket].get(type);
+                if (IS_CACHED && caches[bucket].containsKey(type)) return (ClassAccess<ANY>) caches[bucket].get(type);
                 lock.readLock().unlock();
                 lockFlag ^= 1;
+                lock.writeLock().lock();
+                lockFlag |= 2;
                 try {
-                    accessClass = loader.loadClass(accessClassName);
+                    accessClass = (Class<ANY>) loader.loadClass(accessClassName);
                 } catch (ClassNotFoundException e) {
-                    lock.writeLock().lock();
-                    lockFlag |= 2;
-                    accessClass = loader.loadClass(accessClassName);
-                    lock.writeLock().unlock();
-                    lockFlag ^= 2;
+                    synchronized (loader) {
+                        accessClass = (Class<ANY>) loader.loadClass(accessClassName);
+                    }
                 }
                 accessor = (Accessor) accessClass.newInstance();
-                self = new ClassAccess(accessor.getInfo(), accessor);
-                if (IS_CACHED) {
-                    lock.writeLock().lock();
-                    lockFlag |= 2;
+                self = new ClassAccess(accessor);
+                if (IS_CACHED)
                     caches[bucket].put(type, self);
-                }
                 return self;
             } catch (ClassNotFoundException e) {
             } catch (Exception ex) {
                 throw new RuntimeException("Error constructing method access class: " + accessClassName, ex);
-            }
-
-            if ((lockFlag & 2) == 0) {
-                lock.writeLock().lock();
-                lockFlag |= 2;
             }
 
             ArrayList<Method> methods = new ArrayList<Method>();
@@ -138,7 +122,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             ArrayList<Field> fields = new ArrayList<Field>();
             collectMembers(type, methods, fields, constructors);
 
-            ClassInfo info = new ClassInfo();
+            ClassInfo<ANY> info = new ClassInfo();
             info.bucket = bucket;
 
             int n = methods.size();
@@ -178,6 +162,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             info.fieldNames = new String[n];
             info.fieldTypes = new Class[n];
             info.fieldDescs = new String[n];
+            info.fieldAddrs = new Long[n];
             info.fieldCount = n;
             for (int i = 0; i < n; i++) {
                 Field f = fields.get(i);
@@ -186,12 +171,14 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 info.fieldModifiers[i] = f.getModifiers();
                 info.fieldDescs[i] = Type.getDescriptor(f.getType());
                 info.fieldModifiers[i] += f.getDeclaringClass().isInterface() ? Modifier.INTERFACE : 0;
+                //if (UnsafeHolder.theUnsafe != null) info.fieldAddrs[i] = UnsafeHolder.theUnsafe.objectFieldOffset(f);
             }
-            //Remove "type.getEnclosingClass()==null" due to may trigger error
-            info.isNonStaticMemberClass = type.isMemberClass() && !Modifier.isStatic(type.getModifiers());
 
             String accessClassNameInternal = accessClassName.replace('.', '/');
             String classNameInternal = className.replace('.', '/');
+            //Remove "type.getEnclosingClass()==null" due to may trigger error
+            int position = className.lastIndexOf("$");
+            info.isNonStaticMemberClass = position > 0 && classNameInternal.substring(position).indexOf("/") == -1 && !Modifier.isStatic(type.getModifiers());
             final byte[] bytes = byteCode(info, accessClassNameInternal, classNameInternal);
             if (dumpFile.length > 0) try {
                 File f = new File(dumpFile[0]);
@@ -208,15 +195,15 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
+            caches[bucket].put("ClassInfo", info);
             try {
-                accessClass = UnsafeHolder.theUnsafe.defineClass(accessClassName, bytes, 0, bytes.length, loader, type.getProtectionDomain());
+                accessClass = (Class<ANY>) UnsafeHolder.theUnsafe.defineClass(accessClassName, bytes, 0, bytes.length, loader, type.getProtectionDomain());
             } catch (Throwable ignored1) {
-                accessClass = loader.defineClass(accessClassName, bytes);
+                accessClass = (Class<ANY>) loader.defineClass(accessClassName, bytes);
             }
             try {
                 accessor = (Accessor) accessClass.newInstance();
-                self = new ClassAccess(accessor.getInfo(), accessor);
+                self = new ClassAccess(accessor);
                 if (IS_CACHED) caches[bucket].put(type, self);
                 return self;
             } catch (Exception ex) {
@@ -262,21 +249,26 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         if (attrName != null) {
             mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", Type.getDescriptor(ClassInfo.class));
         }
-        mv.visitLdcInsn(array.length);
+        int len = array.length;
+        mv.visitLdcInsn(len);
         mv.visitTypeInsn(ANEWARRAY, Type.getInternalName(array.getClass().getComponentType()));
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < len; i++) {
             mv.visitInsn(DUP);
             mv.visitLdcInsn(i);
-            if (array[i].getClass().isArray()) insertArray(mv, (Object[]) array[i], null, null);
-            else if (array[i] instanceof Class) {
-                Class clz = (Class) array[i];
+            Object item = array[i];
+            if (item == null) mv.visitInsn(ACONST_NULL);
+            else if (item.getClass().isArray()) insertArray(mv, (Object[]) item, null, null);
+            else if (item instanceof Class) {
+                Class clz = (Class) Array.get(array, i);
                 if (clz.isPrimitive())
                     mv.visitFieldInsn(GETSTATIC, Type.getInternalName(namePrimitiveMap.get(clz.getName())), "TYPE", "Ljava/lang/Class;");
                 else mv.visitLdcInsn(Type.getType(clz));
             } else {
-                mv.visitLdcInsn(array[i]);
-                if (array[i] instanceof Integer)
+                mv.visitLdcInsn(item);
+                if (item instanceof Integer)
                     mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
+                if (item instanceof Long)
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
             }
             mv.visitInsn(AASTORE);
         }
@@ -294,17 +286,25 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
      */
     private static void insertClassInfo(ClassVisitor cw, ClassInfo info, String accessClassNameInternal, String classNameInternal) {
         final String baseName = "sun/reflect/MagicAccessorImpl";
+        //final String baseName = "java/lang/Object";
         final String clzInfoDesc = Type.getDescriptor(ClassInfo.class);
-        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, "L" + baseName + ";L" + accessorPath + "<L" + classNameInternal + ";>;", baseName, new String[]{accessorPath});
+        final String genericName = "<L" + classNameInternal + ";>;";
+        final String clzInfoGenericDesc = "L" + Type.getInternalName(ClassInfo.class) + genericName;
+        cw.visit(V1_1, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, "L" + baseName + ";L" + accessorPath + genericName, baseName, new String[]{accessorPath});
+        String className = classNameInternal;
+        try {
+            int position = className.lastIndexOf("$");
+            if (position >= 0 && classNameInternal.substring(position).indexOf("/") == -1) {
+                String outerClass = classNameInternal.substring(0, position);
+                cw.visitOuterClass(outerClass, null, null);
+                cw.visitInnerClass(classNameInternal, outerClass, info.baseClass.getSimpleName(), info.baseClass.getModifiers());
+            }
+        } catch (NoClassDefFoundError e) {}
 
-        if (info.baseClass.getEnclosingClass() != null)
-            cw.visitInnerClass(classNameInternal, Type.getInternalName(info.baseClass.getEnclosingClass()), info.baseClass.getSimpleName(), info.baseClass.getModifiers());
-        FieldVisitor fv = cw.visitField(ACC_FINAL + ACC_STATIC, "classInfo", clzInfoDesc, null, null);
-        fv.visitEnd();
 
         MethodVisitor mv;
 
-        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, null, null);
+        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, "()" + clzInfoGenericDesc, null);
         mv.visitCode();
         mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
         mv.visitInsn(ARETURN);
@@ -324,41 +324,13 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
         //Static block
         {
+            FieldVisitor fv = cw.visitField(ACC_FINAL + ACC_STATIC, "classInfo", clzInfoDesc, clzInfoGenericDesc, null);
+            fv.visitEnd();
             mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
             mv.visitCode();
-            mv.visitTypeInsn(NEW, classInfoPath);
-            mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V");
-            mv.visitFieldInsn(PUTSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
-
-            insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
-            insertArray(mv, info.methodParamTypes, "methodParamTypes", accessClassNameInternal);
-            insertArray(mv, info.returnTypes, "returnTypes", accessClassNameInternal);
-            insertArray(mv, info.methodModifiers, "methodModifiers", accessClassNameInternal);
-            insertArray(mv, info.methodDescs, "methodDescs", accessClassNameInternal);
-            insertArray(mv, info.fieldNames, "fieldNames", accessClassNameInternal);
-            insertArray(mv, info.fieldTypes, "fieldTypes", accessClassNameInternal);
-            insertArray(mv, info.fieldModifiers, "fieldModifiers", accessClassNameInternal);
-            insertArray(mv, info.fieldDescs, "fieldDescs", accessClassNameInternal);
-            insertArray(mv, info.constructorParamTypes, "constructorParamTypes", accessClassNameInternal);
-            insertArray(mv, info.constructorModifiers, "constructorModifiers", accessClassNameInternal);
-            insertArray(mv, info.constructorDescs, "constructorDescs", accessClassNameInternal);
-
-            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
-            mv.visitLdcInsn(Type.getType(info.baseClass));
-            mv.visitFieldInsn(PUTFIELD, classInfoPath, "baseClass", "Ljava/lang/Class;");
-
-            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
-            mv.visitInsn(info.isNonStaticMemberClass ? ICONST_1 : ICONST_0);
-            mv.visitFieldInsn(PUTFIELD, classInfoPath, "isNonStaticMemberClass", "Z");
-
-            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
             mv.visitIntInsn(BIPUSH, info.bucket);
-            mv.visitFieldInsn(PUTFIELD, classInfoPath, "bucket", "I");
-
-            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
-            mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(" + clzInfoDesc + ")V", false);
-
+            mv.visitMethodInsn(INVOKESTATIC, thisPath, "buildIndex", "(I)" + clzInfoDesc);
+            mv.visitFieldInsn(PUTSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -763,7 +735,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 throw new IllegalArgumentException("No such type " + type);
         }
         final String attr = Character.toString(index) + name;
-        if (classInfo.attrIndex.containsKey(attr)) return classInfo.attrIndex.get(attr);
+        if (classInfo.attrIndex.containsKey(attr)) return (Integer[]) classInfo.attrIndex.get(attr);
 
         throw new IllegalArgumentException("Unable to find " + type + ": " + name);
     }
@@ -916,10 +888,10 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             if (IS_CACHED) {
                 lock.writeLock().lock();
                 lockFlag |= 2;
-                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + Math.max(-1,result)));
+                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + Math.max(-1, result)));
             }
-            if (result >=0 && argCount == 0 && paramTypes[result].length == 0) return result;
-            if (result <0 || minDistance == 0 //
+            if (result >= 0 && argCount == 0 && paramTypes[result].length == 0) return result;
+            if (result < 0 || minDistance == 0 //
                     || (argCount < paramTypes[result].length && !isVarArgs(modifiers[result])) //
                     || (isVarArgs(modifiers[result]) && argCount < paramTypes[result].length - 1)) {
                 String str = "Unable to apply " + (methodName.equals(CONSTRUCTOR_ALIAS) ? "constructor" : "method") + ":\n    " + typesToString(methodName, argTypes) //

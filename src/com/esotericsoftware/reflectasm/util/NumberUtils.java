@@ -75,11 +75,13 @@ public abstract class NumberUtils {
         if (from == null) return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? -1 : 5) : null);
         Class clz;
         boolean isClass = false;
+
         if (!(from instanceof Class)) clz = from.getClass();
         else {
             clz = (Class) from;
             isClass = true;
         }
+
         if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? Integer.valueOf(5) : from);
         if (toClass.isArray() && clz.isArray()) {
             int distance = 5;
@@ -107,7 +109,7 @@ public abstract class NumberUtils {
             if (STANDARD_NUMBER_TYPES.contains(clz))
                 return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : Character.forDigit(((Number) from).intValue(), 10));
             if (clz == String.class) {
-                if (isClass) return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? clz:toClass);
+                if (isClass) return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? clz : toClass);
                 if (((String) from).length() == 1)
                     return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : ((String) from).charAt(0));
             }
@@ -121,7 +123,7 @@ public abstract class NumberUtils {
         return (T) (isGetDistance ? Integer.valueOf(0) : isClass ? clz : toClass.cast(from));
     }
 
-    public static <T> T convert(Object from, Class toClass) {
+    public static <T> T convert(Object from, Class<T> toClass) {
         return convertOrGetDistance(from, toClass, false);
     }
 

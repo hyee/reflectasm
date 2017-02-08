@@ -1,7 +1,6 @@
 package com.esotericsoftware.reflectasm.util;
 
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Probe {
