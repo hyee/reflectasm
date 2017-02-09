@@ -17,7 +17,7 @@ public class ClassAccessBenchmark {
     public static String[] doBenchmark() throws Exception {
         final int count = Benchmark.testRounds;
         final int rounds = Benchmark.testCount;
-        final String fieldName = "fl";
+        final String fieldName = "fi";
         final String methodName = "func2";
         final Benchmark benchmark = new Benchmark();
 
@@ -67,8 +67,8 @@ public class ClassAccessBenchmark {
                                 val = (int) field.get(obj);
                                 break;
                             case 6:
-                                obj.fl = val;
-                                val = obj.fl;
+                                obj.fi = val;
+                                val = obj.fi;
                                 break;
                             //Compare Method Call
                             //=====================
@@ -89,6 +89,12 @@ public class ClassAccessBenchmark {
         }
 
         return benchmark.chart("Benchmark Summary");
+    }
+
+    public static String join(String sep, String[] s0) {
+        String r = "";
+        for (int i = 0; i < s0.length; i++) r += s0[i] + (i == s0.length - 1 ? "" : sep);
+        return r;
     }
 
     public static void print(String[][] results) {
@@ -124,17 +130,17 @@ public class ClassAccessBenchmark {
             }
 
             if (index == 0) {
-                System.out.println("| VM | Item | " + String.join(" | ", names1) + " |");
+                System.out.println("| VM | Item | " + join(" | ", names1) + " |");
                 Arrays.fill(names1, " --------- ");
-                System.out.println("| --- | --- | " + String.join(" | ", names1) + " |");
+                System.out.println("| --- | --- | " + join(" | ", names1) + " |");
             }
-            System.out.println("| " + title + " | " + tag + " | " + String.join(" | ", times1) + " |");
+            System.out.println("| " + title + " | " + tag + " | " + join(" | ", times1) + " |");
         }
         int height = 9 * 18 + 21;
         int width = Math.min(700, 300000 / height);
         System.out.println("Active ClassLoaders: " + ClassAccess.activeAccessClassLoaders());
         title = "Java " + System.getProperty("java.version") + " " + System.getProperty("os.arch") + "(" + title + ")";
-        System.out.println("![](http://chart.apis.google.com/chart?chtt=&" + title + "&chs=" + width + "x" + height + "&chd=t:" + String.join(",", times) + "&chds=0," + max + "&chxl=0:|" + String.join("|", names) + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666)\n");
+        System.out.println("![](http://chart.apis.google.com/chart?chtt=&" + title + "&chs=" + width + "x" + height + "&chd=t:" + join(",", times) + "&chds=0," + max + "&chxl=0:|" + join("|", names) + "&cht=bhg&chbh=10&chxt=y&" + "chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|" + "663366|663399|6633CC|6633FF|666600|666633|666666)\n");
     }
 
     public static void main(String[] args) throws Exception {

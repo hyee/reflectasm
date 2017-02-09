@@ -2,6 +2,7 @@ package com.esotericsoftware.reflectasm;
 
 import junit.framework.TestCase;
 import test.Many;
+import test.TestObject;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -36,10 +37,10 @@ public class ClassAccessTest extends TestCase {
     }
 
     public void testCase2() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
-        int count = 100;
-        int rounds = 3000;
+        final int count = 100;
+        final int rounds = 3000;
         ExecutorService pool = Executors.newFixedThreadPool(count);
-        CountDownLatch latch = new CountDownLatch(count);
+        final CountDownLatch latch = new CountDownLatch(count);
         Runnable R = new Runnable() {
             @Override
             public void run() {
@@ -70,6 +71,57 @@ public class ClassAccessTest extends TestCase {
 
     }
 
+    public void testCase3() throws Exception {
+        {
+            ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+            TestObject obj;
+            // Construction
+            obj = access.newInstance();
+            obj = access.newInstance(1, 2, 3, 4);
+
+            // Set+Get field
+            access.set(null, "fs", 1); // static field
+            System.out.println(access.get(null, "fs"));
+
+            access.set(obj, "fd", 2);
+            System.out.println(access.get(obj, "fd"));
+
+            // Method invoke
+            access.invoke(null, "func1", "a"); //static call
+            System.out.println(access.invoke(obj, "func2", 1, 2, 3, 4));
+        }
+
+        {
+            ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+            TestObject obj;
+            //Identify the indexes for further use
+            int newIndex = access.indexOfConstructor(int.class, Double.class, String.class, long.class);
+            int fieldIndex = access.indexOfField("fd");
+            int methodIndex = access.indexOfMethod("func1", String.class);
+            //Now use the index to access object in loop or other part
+            for (int i = 0; i < 100; i++) {
+                obj = access.newInstanceWithIndex(newIndex, 1, 2, 3, 4);
+                access.set(obj, fieldIndex, 123);
+                String result = access.invokeWithIndex(null, methodIndex, "x");
+            }
+        }
+
+        {
+            ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+            TestObject obj;
+            //Identify the indexes for further use
+            int newIndex = access.indexOfConstructor(int.class, Double.class, String.class, long.class);
+            int fieldIndex = access.indexOfField("fd");
+            int methodIndex = access.indexOfMethod("func1", String.class);
+            //Now use the index to access object in loop or other part
+            for (int i = 0; i < 100; i++) {
+                obj = access.accessor.newInstanceWithIndex(newIndex, 1, Double.valueOf(2), "3", 4L);
+                access.accessor.set(obj, fieldIndex, Double.valueOf(123));
+                String result = access.accessor.invokeWithIndex(null, methodIndex, "x");
+            }
+        }
+    }
+
     static class baseClass1 {
         public void test() {}
     }
@@ -86,8 +138,6 @@ public class ClassAccessTest extends TestCase {
         }
 
         class StaticInner {}
-
-        ;
     }
 }
 

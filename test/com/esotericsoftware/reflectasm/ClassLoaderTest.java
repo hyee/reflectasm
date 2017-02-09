@@ -21,7 +21,6 @@ public class ClassLoaderTest extends TestCase {
 
     public void testAutoUnloadClassloaders() throws Exception {
         int initialCount = AccessClassLoader.activeAccessClassLoaders();
-
         ClassLoader testClassLoader1 = new TestClassLoader1();
         Class testClass1 = testClassLoader1.loadClass("com.esotericsoftware.reflectasm.ClassLoaderTest$Test");
         Object testObject1 = testClass1.newInstance();

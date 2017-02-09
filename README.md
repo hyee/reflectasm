@@ -16,7 +16,7 @@ This is the revised version, some differences from `EsotericSoftware/reflectasm`
 * Removes the harcodes of the package name
 * Supports accessing non-public class/method/field
 
-To support Java 7, just change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
+To support <b>Java 7</b>, just change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
 
 ## Overview
 
@@ -24,8 +24,8 @@ ReflectASM is a very small Java library that provides high performance reflectio
 
 #### Summary of the cost(Smaller value means better performance)
 The benchmark code can be found in the `benchmark` directory, test environment:
-* VM : Java 8u112 x86<br/>
 * CPU: Intel I7-3820QM
+* VM : Java 8u112 x86
 * OS : Win10 x64, and as a laptop, the result is not very stable<br/> 
 
 | VM | Item | Direct | ReflectASM | Reflection |
@@ -45,31 +45,75 @@ The benchmark code can be found in the `benchmark` directory, test environment:
 
 ## Usage
 
-Method reflection with ReflectASM:
+Considering this class:
 
 ```java
-SomeClass someObject = ...
-MethodAccess access = MethodAccess.access(SomeClass.class);
-access.invoke(someObject, "setName", "Awesome McLovin");
-String name = (String)access.invoke(someObject, "getName");
+public class TestObject {
+    static String fs;
+    public Double fd;
+    public int fi;
+    private long fl;
+    public TestObject() {fs = "TestObject0";}
+    public TestObject(int fi1, Double fd1, String fs1, long l) {}
+    static String func1(String str) {fs = str;return str;}
+    public String func2(int fi1, Double fd1, String fs1, long l) {return fs;}
+}
+
 ```
 
-Field reflection with ReflectASM:
-
+Reflection with ReflectASM:
 ```java
-SomeClass someObject = ...
-FieldAccess access = FieldAccess.access(SomeClass.class);
-access.set(someObject, "name", "Awesome McLovin");
-String name = (String)access.access(someObject, "name");
+ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+TestObject obj;
+// Construction
+obj = access.newInstance();
+obj = access.newInstance(1, 2, 3, 4);
+
+// Set+Get field
+access.set(null, "fs", 1); // static field
+System.out.println(access.get(null, "fs"));
+
+access.set(obj, "fd", 2);
+System.out.println(access.get(obj, "fd"));
+
+// Method invoke
+access.invoke(null,"func1","a"); //static call
+System.out.println(access.invoke(obj, "func2",1,2,3,4));
 ```
 
-Constructor reflection with ReflectASM:
-
+<br/>
+If same field/method/constructor is referenced frequently, for performance purpose, consider following code:
 ```java
-ConstructorAccess<SomeClass> access = ConstructorAccess.access(SomeClass.class);
-SomeClass someObject = access.newInstance();
+ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+TestObject obj;
+//Identify the indexes for further use
+int newIndex=access.indexOfConstructor(int.class, Double.class, String.class, long.class);
+int fieldIndex=access.indexOfField("fd");
+int methodIndex=access.indexOfMethod("func1",String.class);
+//Now use the index to access object in loop or other part
+for(int i=0;i<100;i++) {
+    obj=access.newInstanceWithIndex(newIndex,1,2,3,4);
+    access.set(obj,fieldIndex,123);
+    String result=access.invokeWithIndex(null,methodIndex,"x");
+}
 ```
 
+<br/>
+With above code, input arguments are auto-casted into the corresponding data types before the call. If auto-casting is unnecessary in your code and all argument types are correct previously, for more performance purpose, replace as:
+```java
+ClassAccess<TestObject> access = ClassAccess.access(TestObject.class);
+TestObject obj;
+//Identify the indexes for further use
+int newIndex=access.indexOfConstructor(int.class, Double.class, String.class, long.class);
+int fieldIndex=access.indexOfField("fd");
+int methodIndex=access.indexOfMethod("func1",String.class);
+//Now use the index to access object in loop or other part
+for(int i=0;i<100;i++) {
+    obj=access.accessor.newInstanceWithIndex(newIndex,1,Double.valueOf(2),"3",4L);
+    access.accessor.set(obj,fieldIndex,Double.valueOf(123));
+    String result=access.accessor.invokeWithIndex(null,methodIndex,"x");
+}
+```
 Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAccess, {}=Array):
 
 | ClassAccess.*method* | Equivalent | Discription |
@@ -103,30 +147,11 @@ Other static fields:
 * `ClassAccess.IS_CACHED`: The option to cache the method/constructor indexes and the dynamic classes, default is `true`. VM parameter `reflectasm.is_cache` can also control this option
 * `ClassAccess.IS_STRICT_CONVERT`: controls the auto-conversion of the input arguments for the invoke/set/constructor functions, i.e., auto-cast `String` into `int` when a method only accepts the `int` parameter. Default is `false`(enabled conversion), and VM parameter `reflectasm.is_strict_convert` can also control this option
 
-## Avoiding Name Lookup
 
-For maximum performance when methods or fields are accessed repeatedly, the method or field index should be used instead of the name:
-
-```java
-SomeClass someObject = ...
-MethodAccess access = MethodAccess.access(SomeClass.class);
-int addNameIndex = access.getIndex("addName");
-for (String name : names)
-    access.invokeWithIndex(someObject, addNameIndex, "Awesome McLovin");
-```
-
-Iterate all fields:
-
-```java
-FieldAccess access = FieldAccess.access(SomeClass.class);
-for(int i = 0, n = access.getFieldCount(); i < n; i++) {
-    access.set(instanceObject, i, valueToPut);              
-}
-```
 
 ## Visibility
 
-ReflectASM can always access public members. An attempt is made to define access classes in the same classloader (using setAccessible) and package as the accessed class. If the security manager allows setAccessible to succeed, then protected and default access (package private) members can be accessed. If setAccessible fails, no exception is thrown, but only public members can be accessed. Private members can never be accessed.
+ReflectASM can always access all members(public + non-public) that defined inside it and its supper classes and interfaces. 
 
 ## Exceptions
 

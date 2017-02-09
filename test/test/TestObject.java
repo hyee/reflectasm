@@ -6,8 +6,8 @@ package test;
 public class TestObject {
     static String fs;
     public Double fd;
-    public int fl;
-    private long fi;
+    public int fi;
+    private long fl;
 
     public TestObject() {
         fs = "TestObject0";
@@ -15,11 +15,12 @@ public class TestObject {
 
     public TestObject(int fi1, Double fd1, String fs1, long l) {}
 
-    static void func1() {
-        fs = "func1";
+    static String func1(String str) {
+        fs = str;
+        return str;
     }
 
     public String func2(int fi1, Double fd1, String fs1, long l) {
-        return fs1;
+        return fs;
     }
 }

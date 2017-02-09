@@ -16,6 +16,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.esotericsoftware.reflectasm.util.NumberUtils.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+/*
+import org.objectweb.asm.*;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.util.TraceClassVisitor;
+import static org.objectweb.asm.Opcodes.*;*/
+
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond", "ConstantConditions", "Unsafe"})
 public class ClassAccess<ANY> implements Accessor<ANY> {
     public final static int HASH_BUCKETS = 16;
@@ -751,7 +757,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         return indexOfMethod(CONSTRUCTOR_ALIAS, constructor.getParameterTypes());
     }
 
-    public int indexOfConstructor(Class[] parameterTypes) {
+    public int indexOfConstructor(Class... parameterTypes) {
         return indexOfMethod(CONSTRUCTOR_ALIAS, parameterTypes);
     }
 
@@ -1051,7 +1057,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             for (int i = 0; i < args.length; i++) paramTypes[i] = args[i] == null ? null : args[i].getClass();
             index = indexOfMethod(CONSTRUCTOR_ALIAS, paramTypes);
         }
-        return accessor.newInstanceWithIndex(index, args);
+        return newInstanceWithIndex(index, args);
     }
 
     public void set(ANY instance, int fieldIndex, Object value) {
