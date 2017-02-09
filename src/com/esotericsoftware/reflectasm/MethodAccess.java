@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 @SuppressWarnings("UnusedDeclaration")
 public class MethodAccess<ANY> {
     public final ClassAccess<ANY> console;
-    public final ClassInfo classInfo;
+    public final ClassInfo<ANY> classInfo;
 
     protected MethodAccess(ClassAccess<ANY> console) {
         this.console = console;
@@ -21,21 +21,21 @@ public class MethodAccess<ANY> {
         return console.toString();
     }
 
-    public <T> T invokeWithIndex(ANY object, int methodIndex, Object... args) {
+    public <T, V> T invokeWithIndex(ANY object, int methodIndex, V... args) {
         return console.invokeWithIndex(object, methodIndex, args);
     }
 
     /**
      * Invokes the method with the specified name and the specified param types.
      */
-    public <T> T invokeWithTypes(ANY object, String methodName, Class[] paramTypes, Object... args) {
+    public <T, V> T invokeWithTypes(ANY object, String methodName, Class[] paramTypes, V... args) {
         return console.invokeWithTypes(object, methodName, paramTypes, args);
     }
 
     /**
      * Invokes the first method with the specified name and the specified number of arguments.
      */
-    public <T> T invoke(ANY object, String methodName, Object... args) {
+    public <T, V> T invoke(ANY object, String methodName, V... args) {
         return console.invoke(object, methodName, args);
     }
 
@@ -64,15 +64,19 @@ public class MethodAccess<ANY> {
         return console.indexOfMethod(methodName, paramsCount);
     }
 
-    public String[] getMethodNames() {
-        return console.getMethodNames();
-    }
+    public String[] getMethodNames() {return classInfo.methodNames;}
 
     public Class[][] getParameterTypes() {
-        return console.getParameterTypes();
+        return classInfo.methodParamTypes;
     }
 
     public Class[] getReturnTypes() {
-        return console.getReturnTypes();
+        return classInfo.returnTypes;
+    }
+
+    public Integer[] getModifiers() {return classInfo.constructorModifiers;}
+
+    public int getMethodCount() {
+        return classInfo.methodCount;
     }
 }

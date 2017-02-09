@@ -69,10 +69,10 @@ public abstract class NumberUtils {
         STANDARD_NUMBER_TYPES = Collections.unmodifiableSet(numberTypes);
     }
 
-    private static <T> T convertOrGetDistance(Object from, Class toClass, final boolean isGetDistance) {
+    private static <T, V> T convertOrGetDistance(V from, Class toClass, final boolean isGetDistance) {
         //return (T) (isGetDistance ? Integer.valueOf(5) : from);
-        if (toClass == null) return (T) (isGetDistance ? Integer.valueOf(5) : null);
-        if (from == null) return (T) (isGetDistance ? Integer.valueOf(toClass.isPrimitive() ? -1 : 5) : null);
+        if (toClass == null) return (T) (isGetDistance ? 5 : null);
+        if (from == null) return (T) (isGetDistance ? (toClass.isPrimitive() ? -1 : 5) : null);
         Class clz;
         boolean isClass = false;
 
@@ -82,7 +82,7 @@ public abstract class NumberUtils {
             isClass = true;
         }
 
-        if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? Integer.valueOf(5) : from);
+        if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? 5 : from);
         if (toClass.isArray() && clz.isArray()) {
             int distance = 5;
             toClass = toClass.getComponentType();
@@ -95,39 +95,38 @@ public abstract class NumberUtils {
             }
             return (T) (isGetDistance ? distance : objects);
         }
-        if (toClass == String.class)
-            return (T) (isGetDistance ? Integer.valueOf(2) : isClass ? toClass : String.valueOf(from));
+        if (toClass == String.class) return (T) (isGetDistance ? 2 : isClass ? toClass : String.valueOf(from));
         if (STANDARD_NUMBER_TYPES.contains(toClass)) {
+            Class<? extends Number> to = (Class<? extends Number>) toClass;
             if (STANDARD_NUMBER_TYPES.contains(clz))
-                return (T) (isGetDistance ? Integer.valueOf(4) : isClass ? toClass : convertNumberToTargetClass((Number) from, toClass));
-            if (clz == String.class)
-                return (T) (isGetDistance ? Integer.valueOf(1) : isClass ? clz : parseNumber((String) from, toClass));
+                return (T) (isGetDistance ? 4 : isClass ? toClass : convertNumberToTargetClass((Number) from, to));
+            if (clz == String.class) return (T) (isGetDistance ? 1 : isClass ? clz : parseNumber((String) from, to));
             if (clz == Character.class || clz == char.class)
-                return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : convertNumberToTargetClass(Character.digit((char) from, 10), toClass));
+                return (T) (isGetDistance ? 3 : isClass ? toClass : convertNumberToTargetClass(Character.digit((Character) from, 10), to));
         }
         if ((toClass == Character.class || toClass == char.class)) {
             if (STANDARD_NUMBER_TYPES.contains(clz))
-                return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : Character.forDigit(((Number) from).intValue(), 10));
+                return (T) (isGetDistance ? 3 : isClass ? toClass : Character.forDigit(((Number) from).intValue(), 10));
             if (clz == String.class) {
-                if (isClass) return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? clz : toClass);
+                if (isClass) return (T) (isGetDistance ? 3 : isClass ? clz : toClass);
                 if (((String) from).length() == 1)
-                    return (T) (isGetDistance ? Integer.valueOf(3) : isClass ? toClass : ((String) from).charAt(0));
+                    return (T) (isGetDistance ? 3 : isClass ? toClass : ((String) from).charAt(0));
             }
         }
         if (namePrimitiveMap.containsKey(toClass.getName()) && namePrimitiveMap.get(toClass.getName()) == clz) {
-            return (T) (isGetDistance ? Integer.valueOf(5) : isClass ? toClass : from);
+            return (T) (isGetDistance ? 5 : isClass ? toClass : from);
         }
         if (namePrimitiveMap.containsKey(clz.getName()) && namePrimitiveMap.get(clz.getName()) == toClass) {
-            return (T) (isGetDistance ? Integer.valueOf(5) : isClass ? toClass : from);
+            return (T) (isGetDistance ? 5 : isClass ? toClass : from);
         }
-        return (T) (isGetDistance ? Integer.valueOf(0) : isClass ? clz : toClass.cast(from));
+        return (T) (isGetDistance ? 0 : isClass ? clz : toClass.cast(from));
     }
 
-    public static <T> T convert(Object from, Class<T> toClass) {
+    public static <T, V> T convert(V from, Class<T> toClass) {
         return convertOrGetDistance(from, toClass, false);
     }
 
-    public static int getDistance(Object from, Class toClass) {
+    public static <V> int getDistance(V from, Class<?> toClass) {
         return (Integer) convertOrGetDistance(from, toClass, true);
     }
 

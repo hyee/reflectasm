@@ -13,6 +13,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvoke() {
+        ClassAccess.IS_DEBUG = true;
         MethodAccess<SomeClass> access1 = MethodAccess.access(ConcurrentHashMap.class, ".");
 
         MethodAccess<SomeClass> access = MethodAccess.access(SomeClass.class, ".");
@@ -46,10 +47,19 @@ public class MethodAccessTest extends TestCase {
         value = access.invoke(null, "staticMethod", "moo", 1234);
         assertEquals("meow! moo, 1234", value);
         //int methodWithVarArgs(char,Double,Long,Integer[])
+        try {
+            value = access.invoke(someObject, "methodWithVarArgs", null, 2, 3);
+            fail();
+        } catch (IllegalArgumentException e) {}
         value = access.invoke(someObject, "methodWithVarArgs", 1, 2, 3);
         assertEquals(0, value);
+        value = access.invoke(someObject, "methodWithVarArgs", 1, 2, 3, null);
+        assertEquals(1, value);
+        value = access.invoke(someObject, "methodWithVarArgs", 1, 2, 3, 4, 5, 6, 7);
+        assertEquals(4, value);
         value = access.invoke(someObject, "methodWithVarArgs", 'x', 2, 3, 4);
         assertEquals(1, value);
+        ClassAccess.IS_STRICT_CONVERT = false;
         value = access.invoke(someObject, "methodWithVarArgs", "B", null, 3, 4, null);
         assertEquals(2, value);
         value = access.invoke(someObject, "methodWithVarArgs", new BigDecimal(1), 2, new BigDecimal(20), new Integer[2]);
@@ -57,6 +67,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
+        ClassAccess.IS_DEBUG = true;
         MethodAccess<EmptyClass> access = MethodAccess.access(EmptyClass.class, ".");
         try {
             access.getIndex("name");

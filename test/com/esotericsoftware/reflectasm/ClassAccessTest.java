@@ -13,11 +13,27 @@ import java.util.concurrent.Executors;
  */
 public class ClassAccessTest extends TestCase {
     public void testCase1() {
+        //Generic style
+        ClassAccess.access(TestObject.class, ".");
         ClassAccess<Many> access0 = ClassAccess.access(Many.class);
         Many many = access0.newInstance();
         access0.set(many, "x295", 123);
         int value = access0.get(many, "x295");
         assertEquals(123, value);
+
+        //Non-generic style
+        ClassAccess access5 = ClassAccess.access(Many.class);
+        Object many1 = access5.newInstance();
+        access5.set(many1, "x295", 456);
+        value = (int) access5.get(many1, "x295");
+        assertEquals(456, value);
+
+        //Cast back to generic style
+        ClassAccess<Many> access6 = access5;
+        Many many2 = (Many) many1;
+        access6.set(many2, "x295", 789);
+        value = access6.get(many2, "x295");
+        assertEquals(789, value);
 
         ClassAccess<BaseClass> access = ClassAccess.access(BaseClass.class, ".", "");
         ClassAccess access1 = ClassAccess.access(BaseClass.Inner.class);
@@ -38,7 +54,7 @@ public class ClassAccessTest extends TestCase {
 
     public void testCase2() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
         final int count = 100;
-        final int rounds = 3000;
+        final int rounds = 300;
         ExecutorService pool = Executors.newFixedThreadPool(count);
         final CountDownLatch latch = new CountDownLatch(count);
         Runnable R = new Runnable() {
@@ -55,20 +71,37 @@ public class ClassAccessTest extends TestCase {
 
         latch.await();
         assertEquals(1, ClassAccess.activeAccessClassLoaders());
+        System.out.println(ClassAccess.totalAccesses + " invokes from ClassAccess.access() and " + ClassAccess.cacheHits + " hits from cache");
         System.out.println("Creating " + (count * rounds) + " same proxies with parallel 100 takes " + String.format("%.3f", (System.nanoTime() - s) / 1e6) + " ms.");
 
+        ClassAccess.totalAccesses = 0;
+        ClassAccess.cacheHits = 0;
         s = System.nanoTime();
-        for (int i = 0; i < 100 * count; i++) ClassAccess.access(Many.class).newInstance();
+        for (int i = 0; i < rounds * count; i++) ClassAccess.access(Many.class).newInstance();
+        System.out.println(ClassAccess.totalAccesses + " invokes from ClassAccess.access() and " + ClassAccess.cacheHits + " hits from cache");
         System.out.println("Creating " + (count * rounds) + " same proxies#1 in serial mode takes " + String.format("%.3f", (System.nanoTime() - s) / 1e6) + " ms.");
 
+        ClassAccess.totalAccesses = 0;
+        ClassAccess.cacheHits = 0;
+        ClassAccess.IS_CACHED = false;
         s = System.nanoTime();
-        for (int i = 0; i < 100 * count; i++) {
+        for (int i = 0; i < rounds * count; i++) ClassAccess.access(Many.class).newInstance();
+        System.out.println(ClassAccess.totalAccesses + " invokes from ClassAccess.access() and " + ClassAccess.loaderHits + " hits from loader");
+        System.out.println("Creating " + (count * rounds) + " same proxies#1 in serial mode takes " + String.format("%.3f", (System.nanoTime() - s) / 1e6) + " ms.");
+
+        ClassAccess.totalAccesses = 0;
+        ClassAccess.cacheHits = 0;
+        ClassAccess.IS_CACHED = true;
+        s = System.nanoTime();
+        for (int i = 0; i < rounds * count; i++) {
             ClassLoader testClassLoader = new ClassLoaderTest.TestClassLoader1();
             Class testClass = testClassLoader.loadClass(Many.class.getName());
-            ClassAccess.access(Many.class).newInstance();
+            ClassAccess<Many> access = ClassAccess.access(Many.class);
+            Many many = access.newInstance();
+            access.set(many, "x1", i);
         }
+        System.out.println(ClassAccess.totalAccesses + " invokes from ClassAccess.access() and " + ClassAccess.cacheHits + " hits from cache");
         System.out.println("Creating " + (count * rounds) + " same proxies#2 in serial mode takes " + String.format("%.3f", (System.nanoTime() - s) / 1e6) + " ms.");
-
     }
 
     public void testCase3() throws Exception {
@@ -81,14 +114,14 @@ public class ClassAccessTest extends TestCase {
 
             // Set+Get field
             access.set(null, "fs", 1); // static field
-            System.out.println(access.get(null, "fs"));
+            System.out.println((String) access.get(null, "fs"));
 
             access.set(obj, "fd", 2);
-            System.out.println(access.get(obj, "fd"));
+            System.out.println(access.get(obj, "fd").toString());
 
             // Method invoke
             access.invoke(null, "func1", "a"); //static call
-            System.out.println(access.invoke(obj, "func2", 1, 2, 3, 4));
+            System.out.println((String) access.invoke(obj, "func2", 1, 2, 3, 4));
         }
 
         {

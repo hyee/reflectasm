@@ -3,7 +3,7 @@ package com.esotericsoftware.reflectasm;
 @SuppressWarnings("UnusedDeclaration")
 public class FieldAccess<ANY> {
     public final ClassAccess<ANY> console;
-    public final ClassInfo classInfo;
+    public final ClassInfo<ANY> classInfo;
 
     protected FieldAccess(ClassAccess<ANY> console) {
         this.console = console;
@@ -23,7 +23,7 @@ public class FieldAccess<ANY> {
         return console.indexOfField(fieldName);
     }
 
-    public void set(ANY instance, String fieldName, Object value) {
+    public <T, V> void set(ANY instance, String fieldName, V value) {
         console.set(instance, fieldName, value);
     }
 
@@ -31,19 +31,7 @@ public class FieldAccess<ANY> {
         return console.get(instance, fieldName);
     }
 
-    public String[] getFieldNames() {
-        return console.getFieldNames();
-    }
-
-    public Class[] getFieldTypes() {
-        return console.getFieldTypes();
-    }
-
-    public int getFieldCount() {
-        return console.getFieldCount();
-    }
-
-    public void set(ANY instance, int fieldIndex, Object value) {
+    public <T, V> void set(ANY instance, int fieldIndex, V value) {
         console.set(instance, fieldIndex, value);
     }
 
@@ -79,16 +67,16 @@ public class FieldAccess<ANY> {
         console.setChar(instance, fieldIndex, value);
     }
 
-    public Object get(ANY instance, int fieldIndex) {
+    public <T> T get(ANY instance, int fieldIndex) {
         return console.get(instance, fieldIndex);
     }
 
     public <T> T get(ANY instance, int fieldIndex, Class<T> clz) {
-        return (T) (console.get(instance, fieldIndex, clz));
+        return console.get(instance, fieldIndex, clz);
     }
 
     public <T> T get(ANY instance, String fieldName, Class<T> clz) {
-        return (T) (console.get(instance, fieldName, clz));
+        return console.get(instance, fieldName, clz);
     }
 
     public char getChar(ANY instance, int fieldIndex) {
@@ -125,5 +113,15 @@ public class FieldAccess<ANY> {
 
     public String getString(ANY instance, int fieldIndex) {
         return (String) get(instance, fieldIndex);
+    }
+
+    public String[] getFieldNames() {return classInfo.fieldNames;}
+
+    public Class[] getFieldTypes() {
+        return classInfo.fieldTypes;
+    }
+
+    public int getFieldCount() {
+        return classInfo.fieldCount;
     }
 }

@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor;
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class ConstructorAccess<ANY> {
     public final ClassAccess<ANY> console;
-    public final ClassInfo classInfo;
+    public final ClassInfo<ANY> classInfo;
 
     protected ConstructorAccess(ClassAccess<ANY> console) {
         this.console = console;
@@ -49,15 +49,25 @@ public class ConstructorAccess<ANY> {
         return console.newInstance();
     }
 
-    public ANY newInstanceWithIndex(int constructorIndex, Object... args) {
+    public <V> ANY newInstanceWithIndex(int constructorIndex, V... args) {
         return console.newInstanceWithIndex(constructorIndex, args);
     }
 
-    public ANY newInstanceWithTypes(Class[] paramTypes, Object... args) {
+    public <V> ANY newInstanceWithTypes(Class[] paramTypes, V... args) {
         return console.newInstanceWithTypes(paramTypes, args);
     }
 
-    public ANY newInstance(Object... args) {
+    public <V> ANY newInstance(V... args) {
         return console.newInstance(args);
+    }
+
+    public Class[][] getParameterTypes() {
+        return classInfo.constructorParamTypes;
+    }
+
+    public Integer[] getModifiers() {return classInfo.constructorModifiers;}
+
+    public int getConstructorCount() {
+        return classInfo.constructorCount;
     }
 }

@@ -45,7 +45,8 @@ public class FieldAccessTest extends TestCase {
         assertEquals(0, test.intValue);
         access.set(test, index, 1234);
         assertEquals(1234, test.intValue);
-        assertEquals(1234, access.get(test, index));
+        int value = access.get(test, index);
+        assertEquals(1234, value);
 
         assertEquals(false, access.getBoolean(test, access.getIndex("booleanField")));
         access.setBoolean(test, access.getIndex("booleanField"), true);
