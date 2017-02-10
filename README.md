@@ -32,18 +32,20 @@ The benchmark code can be found in the `benchmark` directory, test environment:
 
 | VM | Item | Direct | ReflectASM | Reflection |
 | --- | --- |  ---------  |  ---------  |  ---------  |
-| Server VM | Field Set+Get | 1.16 ns | 7.27 ns | 13.12 ns |
-| Server VM | Method Call | 0.96 ns | 4.04 ns | 5.40 ns |
-| Server VM | Constructor | 4.88 ns | 8.22 ns | 11.12 ns |
-| Client VM | Field Set+Get | 2.82 ns | 14.59 ns | 211.06 ns |
-| Client VM | Method Call | 4.29 ns | 8.54 ns | 56.76 ns |
-| Client VM | Constructor | 68.97 ns | 71.01 ns | 159.61 ns |
+| Server VM | Field Set+Get | 1.24 ns | 7.56 ns | 13.63 ns |
+| Server VM | Method Call | 0.88 ns | 3.55 ns | 4.94 ns |
+| Server VM | Constructor | 5.15 ns | 7.33 ns | 10.33 ns |
+| Client VM | Field Set+Get | 2.56 ns | 13.89 ns | 211.80 ns |
+| Client VM | Method Call | 2.28 ns | 8.27 ns | 48.78 ns |
+| Client VM | Constructor | 69.57 ns | 73.54 ns | 154.13 ns |
 
 #### Server VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:34724999,218048348,393533646,28842660,121195960,162035932,146342344,246506328,333601444&chds=0,393533646&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:111942264,680500117,1226891277,79043649,319279414,444792338,463928334,660043205,930026772&chds=0,1226891277&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 #### Client VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:84516770,437625535,6331921319,128672898,256204680,1702772131,2069235992,2130361766,4788436860&chds=0,6331921319&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:76672841,416837942,6354088512,68303361,248084480,1463360435,2087202542,2206321850,4623966407&chds=0,6354088512&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+
+
 
 ## Usage
 
@@ -118,7 +120,7 @@ for(int i=0;i<100;i++) {
 ```
 Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAccess, {}=Array):
 
-| ClassAccess.*method* | Equivalent | Description |
+| ClassAccess.*method* | Equivalence | Description |
 | -------------------- | ---------- | ----------- | 
 | *static* access(Class,[dump dir]) | (F/M/C).access | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
 | IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |

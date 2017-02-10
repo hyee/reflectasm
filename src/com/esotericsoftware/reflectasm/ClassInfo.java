@@ -24,7 +24,7 @@ public class ClassInfo<ANY> {
     public int fieldCount;
     public int constructorCount;
     public Map<String, Integer[]> attrIndex;
-    public String[] methodDescs;
-    public String[] fieldDescs;
+    public String[][] methodDescs;
+    public String[][] fieldDescs;
     public String[] constructorDescs;
 }

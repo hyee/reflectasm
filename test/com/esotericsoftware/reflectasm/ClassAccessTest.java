@@ -42,14 +42,28 @@ public class ClassAccessTest extends TestCase {
             fail();
         } catch (IllegalArgumentException e) {}
         BaseClass instance = access.newInstance(this);
-        instance.test();
+        instance.test0();
         BaseClass.Inner inner = (BaseClass.Inner) access.invoke(instance, "newInner");
-
         access1.newInstance(instance);
         access = ClassAccess.access(BaseClass.StaticInner.class);
         access.newInstance(instance);
         access = ClassAccess.access(BaseClass.Inner.DeeperInner.class);
         access.newInstance(inner);
+    }
+
+    public void testOverload() {
+        ClassAccess<BaseClass> access1 = ClassAccess.access(BaseClass.class);
+        ClassAccess access2 = ClassAccess.access(ChildClass.class, ".");
+        ChildClass child = (ChildClass) access2.newInstance(this);
+        assertEquals("test10", access2.invoke(child, "test0"));
+        assertEquals("test11", access2.invoke(child, "test1"));
+        assertEquals("test02", access2.invoke(child, "test2"));
+        assertEquals("test01", access1.invoke(child, "test1"));
+        assertEquals(1, (int) access1.get(child, "x"));
+        assertEquals(3, access2.get(child, "x"));
+        assertEquals(4, access2.get(child, "y"));
+        assertEquals(5, access2.get(child, "z"));
+
     }
 
     public void testCase2() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
@@ -155,12 +169,16 @@ public class ClassAccessTest extends TestCase {
         }
     }
 
-    static class baseClass1 {
-        public void test() {}
-    }
-
     class BaseClass {
-        public void test() {}
+        public int x = 1;
+        int y = 2;
+        int z = 5;
+
+        public String test0() {return "test00";}
+
+        private String test1() {return "test01";}
+
+        private String test2() {return "test02";}
 
         Inner newInner() {
             return new Inner();
@@ -171,6 +189,17 @@ public class ClassAccessTest extends TestCase {
         }
 
         class StaticInner {}
+    }
+
+    class ChildClass extends BaseClass {
+        public int x = 3;
+        int y = 4;
+
+        public String test0() {return "test10";}
+
+        private String test1() {
+            return "test11";
+        }
     }
 }
 

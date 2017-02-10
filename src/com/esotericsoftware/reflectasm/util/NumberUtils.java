@@ -98,8 +98,9 @@ public abstract class NumberUtils {
         if (toClass == String.class) return (T) (isGetDistance ? 2 : isClass ? toClass : String.valueOf(from));
         if (STANDARD_NUMBER_TYPES.contains(toClass)) {
             Class<? extends Number> to = (Class<? extends Number>) toClass;
-            if (STANDARD_NUMBER_TYPES.contains(clz))
+            if (STANDARD_NUMBER_TYPES.contains(clz)) {
                 return (T) (isGetDistance ? 4 : isClass ? toClass : convertNumberToTargetClass((Number) from, to));
+            }
             if (clz == String.class) return (T) (isGetDistance ? 1 : isClass ? clz : parseNumber((String) from, to));
             if (clz == Character.class || clz == char.class)
                 return (T) (isGetDistance ? 3 : isClass ? toClass : convertNumberToTargetClass(Character.digit((Character) from, 10), to));

@@ -8,7 +8,7 @@ import java.util.TreeMap;
 
 public class Benchmark {
     static int testRounds = 300000;
-    static int testCount = 100;
+    static int testCount = (System.getProperty("java.vm.name").indexOf("Server VM") > -1) ? 300 : 100;
     public boolean warmup = true;
     public Map<String, Long> testTimes = new TreeMap<>();
     private long s;

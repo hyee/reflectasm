@@ -8,12 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class MethodAccessTest extends TestCase {
-    public void abc(char c) {
-        System.out.println(c);
-    }
 
     public void testInvoke() {
-        ClassAccess.IS_DEBUG = true;
         MethodAccess<SomeClass> access1 = MethodAccess.access(ConcurrentHashMap.class, ".");
 
         MethodAccess<SomeClass> access = MethodAccess.access(SomeClass.class, ".");
@@ -67,7 +63,6 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testEmptyClass() {
-        ClassAccess.IS_DEBUG = true;
         MethodAccess<EmptyClass> access = MethodAccess.access(EmptyClass.class, ".");
         try {
             access.getIndex("name");
