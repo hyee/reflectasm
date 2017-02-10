@@ -63,7 +63,13 @@ public class ClassAccessTest extends TestCase {
         assertEquals(3, access2.get(child, "x"));
         assertEquals(4, access2.get(child, "y"));
         assertEquals(5, access2.get(child, "z"));
-
+        int fieldIndex = access2.indexOfField(BaseClass.class, "x");
+        int methodIndex = access2.indexOfMethod(BaseClass.class, "test1");
+        assertEquals("test01", access2.invokeWithIndex(child, methodIndex));
+        assertEquals(1, access2.get(child, fieldIndex));
+        access2.set(child, fieldIndex, 9);
+        assertEquals(9, access2.get(child, fieldIndex));
+        assertEquals(3, access2.get(child, "x"));
     }
 
     public void testCase2() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {

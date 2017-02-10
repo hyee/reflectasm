@@ -124,9 +124,12 @@ Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAcces
 | -------------------- | ---------- | ----------- | 
 | *static* access(Class,[dump dir]) | (F/M/C).access | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
 | IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
+| IndexesOf(Class,name,type)| | returns an index array that matches the given class,name and type(`field`/`method`/`<new>`) |
 | IndexOf(name,type)| | returns the first element of `IndexesOf`|
-| IndexOfField(String/Field) | F.getIndex | returns the field index that matches the given input|
-| IndexOfMethod(String/Method) | M.getIndex | returns the first method index that matches the given input|
+| IndexOfField(name/Field) | F.getIndex | returns the field index that matches the given input|
+| IndexOfField(Class,name) | | returns the field index that defined in the target class|
+| IndexOfMethod(name/Method) | M.getIndex | returns the first method index that matches the given input|
+| IndexOfMethod(Class,name,{argTypes}) | | returns the first method index that defined in the target class|
 | indexOfMethod(name,argCount/{argTypes}) | (M/C).getIndex | returns the first index that matches the given input|
 | indexOfConstructor(constructor) | C.getIndex | returns the index that matches the given constructor|
 | set(instance,Name/index,value) | F.set | Assign value to the specific field |
@@ -155,7 +158,20 @@ Other static fields:
 
 ## Visibility
 
-ReflectASM can always access all members(public + non-public) that defined inside it and its supper classes and interfaces. 
+ReflectASM can always access all members(public + non-public) that defined inside it + supper-classes + interfaces. 
+
+To access a field/method defined in the class's super-class which is also samely defined in the class itself with the same parameters, then position the index firstly and invoke/get/set with it afterwards. For example:
+```java
+int fieldIndex=access.indexOfField(<superClass>,<fieldName>);
+access.get(instance,fieldIndex);
+access.set(instance,fieldIndex,value);
+
+int methodIndex=access.indexOfMethod(<superClass>,<methodName>,{<parameterTypes>});
+access.invokeWithIndex(instance,methodIndex,{arguments});
+```
+
+Refer to test case `com.esotericsoftware.reflectasm.testOverload()` for more examples`
+
 
 ## Exceptions
 

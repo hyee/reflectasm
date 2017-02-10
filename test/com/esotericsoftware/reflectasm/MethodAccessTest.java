@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentMap;
 public class MethodAccessTest extends TestCase {
 
     public void testInvoke() {
-        MethodAccess<SomeClass> access1 = MethodAccess.access(ConcurrentHashMap.class, ".");
 
         MethodAccess<SomeClass> access = MethodAccess.access(SomeClass.class, ".");
         SomeClass someObject = access.console.newInstance();
@@ -97,7 +96,7 @@ public class MethodAccessTest extends TestCase {
     }
 
     public void testInvokeInterface() {
-        MethodAccess<ConcurrentMap> access = MethodAccess.access(ConcurrentMap.class);
+        MethodAccess<ConcurrentMap> access = MethodAccess.access(ConcurrentMap.class, ".");
         ConcurrentHashMap<String, String> someMap = new ConcurrentHashMap<String, String>();
         someMap.put("first", "one");
         someMap.put("second", "two");

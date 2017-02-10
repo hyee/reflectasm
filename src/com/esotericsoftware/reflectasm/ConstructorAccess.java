@@ -26,7 +26,7 @@ public class ConstructorAccess<ANY> {
     }
 
     public int getIndex(Class... paramTypes) {
-        return console.indexOfMethod(ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
+        return console.indexOfMethod(null, ClassAccess.CONSTRUCTOR_ALIAS, paramTypes);
     }
 
     public int getIndex(int paramCount) {

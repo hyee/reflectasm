@@ -54,7 +54,7 @@ public class MethodAccess<ANY> {
      * Returns the index of the first method with the specified name and param types.
      */
     public int getIndex(String methodName, Class... paramTypes) {
-        return console.indexOfMethod(methodName, paramTypes);
+        return console.indexOfMethod(null, methodName, paramTypes);
     }
 
     /**

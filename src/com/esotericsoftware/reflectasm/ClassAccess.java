@@ -260,31 +260,44 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         ArrayList<Class> classes = new ArrayList<>();
         collectClasses(type, classes);
         LinkedHashMap<String, Object> map = new LinkedHashMap();
-
+        LinkedHashMap<String, Object> candidates = new LinkedHashMap();
         for (Class clz : classes) {
             for (Method m : clz.getDeclaredMethods()) {
-                //if(Modifier.isAbstract(m.getModifiers())) continue;
                 String desc = m.getName() + Type.getMethodDescriptor(m);
                 Method m0 = (Method) map.get(desc);
+                int md1 = m.getModifiers();
+                int md0 = m0 == null ? 0 : m0.getModifiers();
                 if (m0 == null) map.put(desc, m);
-                else if (clz != type && Modifier.isPublic(m.getModifiers()) && !Modifier.isPublic(m0.getModifiers()))
+                else if (((Modifier.isPublic(md1) && !Modifier.isPublic(md0))//
+                        || (Modifier.isStatic(md1) && !Modifier.isStatic(md0))//
+                        || (Modifier.isAbstract(md0) && !Modifier.isAbstract(md1))) && clz != type) {
                     map.put(desc, m);
-                else if (clz != type && Modifier.isStatic(m.getModifiers()) && !Modifier.isStatic(m0.getModifiers()))
-                    map.put(desc, m);
+                    candidates.put(desc, m0);
+                } else candidates.put(desc, m);
             }
             for (Field f : clz.getDeclaredFields()) {
                 String desc = f.getName();
                 Field f0 = (Field) map.get(desc);
+                int md1 = f.getModifiers();
+                int md0 = f0 == null ? 0 : f0.getModifiers();
                 if (!map.containsKey(desc)) map.put(desc, f);
-                else if (clz != type && Modifier.isPublic(f.getModifiers()) && !Modifier.isPublic(f0.getModifiers()))
+                else if (((Modifier.isPublic(md1) && !Modifier.isPublic(md0))//
+                        || (Modifier.isStatic(md1) && !Modifier.isStatic(md0))//
+                        || (Modifier.isAbstract(md0) && !Modifier.isAbstract(md1))) && clz != type) {
                     map.put(desc, f);
-                else if (clz != type && Modifier.isStatic(f.getModifiers()) && !Modifier.isStatic(f0.getModifiers()))
-                    map.put(desc, f);
+                    candidates.put(desc, f0);
+                } else candidates.put(desc, f);
             }
         }
 
         for (String desc : map.keySet()) {
             Object value = map.get(desc);
+            if (value.getClass() == Method.class) methods.add((Method) value);
+            else fields.add((Field) value);
+        }
+
+        for (String desc : candidates.keySet()) {
+            Object value = candidates.get(desc);
             if (value.getClass() == Method.class) methods.add((Method) value);
             else fields.add((Field) value);
         }
@@ -764,7 +777,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         return classInfo.isNonStaticMemberClass;
     }
 
-    public Integer[] indexesOf(String name, String type) {
+    public Integer[] indexesOf(Class clz, String name, String type) {
         char index;
         if (name.equals(CONSTRUCTOR_ALIAS)) index = 3;
         else switch (type == null ? "" : type.toLowerCase()) {
@@ -782,9 +795,22 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 throw new IllegalArgumentException("No such type " + type);
         }
         final String attr = Character.toString(index) + name;
-        if (classInfo.attrIndex.containsKey(attr)) return (Integer[]) classInfo.attrIndex.get(attr);
-
+        Integer[] list = (Integer[]) classInfo.attrIndex.get(attr);
+        if (list != null) {
+            if (clz == null || index == 3) return list;
+            ArrayList<Integer> ary = new ArrayList();
+            String[][] desc = index == 1 ? classInfo.fieldDescs : classInfo.methodDescs;
+            String className = Type.getInternalName(clz);
+            for (Integer e : list)
+                if (desc[e][2].equals(className)) ary.add(e);
+            list = ary.toArray(new Integer[]{});
+            if (list.length > 0) return list;
+        }
         throw new IllegalArgumentException("Unable to find " + type + ": " + name);
+    }
+
+    public Integer[] indexesOf(String name, String type) {
+        return indexesOf(null, name, type);
     }
 
     public Integer indexOf(String name, String type) {
@@ -792,31 +818,35 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         return indexes.length == 1 ? indexes[0] : null;
     }
 
+    public int indexOfField(Class clz, String fieldName) {
+        return indexesOf(clz, fieldName, "field")[0];
+    }
+
     public int indexOfField(String fieldName) {
-        return indexesOf(fieldName, "field")[0];
+        return indexesOf(null, fieldName, "field")[0];
     }
 
     public int indexOfField(Field field) {
-        return indexOfField(field.getName());
+        return indexOfField(field.getDeclaringClass(), field.getName());
     }
 
     public int indexOfConstructor(Constructor<?> constructor) {
-        return indexOfMethod(CONSTRUCTOR_ALIAS, constructor.getParameterTypes());
+        return indexOfMethod(null, CONSTRUCTOR_ALIAS, constructor.getParameterTypes());
     }
 
     public int indexOfConstructor(Class... parameterTypes) {
-        return indexOfMethod(CONSTRUCTOR_ALIAS, parameterTypes);
+        return indexOfMethod(null, CONSTRUCTOR_ALIAS, parameterTypes);
     }
 
     public int indexOfMethod(Method method) {
-        return indexOfMethod(method.getName(), method.getParameterTypes());
+        return indexOfMethod(method.getDeclaringClass(), method.getName(), method.getParameterTypes());
     }
 
     /**
      * Returns the index of the first method with the specified name.
      */
     public int indexOfMethod(String methodName) {
-        return indexesOf(methodName, "method")[0];
+        return indexesOf(null, methodName, "method")[0];
     }
 
     public Integer getSignature(String methodName, Class... paramTypes) {
@@ -851,8 +881,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
      * @return
      */
     @SafeVarargs
-    public final int indexOfMethod(String methodName, Class... argTypes) {
-        Integer[] candidates = indexesOf(methodName, "method");
+    public final int indexOfMethod(Class clz, String methodName, Class... argTypes) {
+        Integer[] candidates = indexesOf(clz, methodName, "method");
         //if(IS_STRICT_CONVERT) return candidates[0];
         int result = -1;
         Class[][] paramTypes;
@@ -964,11 +994,15 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         }
     }
 
+    public final int indexOfMethod(String methodName, Class... argTypes) {
+        return indexOfMethod(null, methodName, argTypes);
+    }
+
     /**
      * Returns the index of the first method with the specified name and the specified number of arguments.
      */
     public int indexOfMethod(String methodName, int paramsCount) {
-        for (int index : indexesOf(methodName, "method")) {
+        for (int index : indexesOf(null, methodName, "method")) {
             final int modifier = (methodName == CONSTRUCTOR_ALIAS) ? classInfo.constructorModifiers[index] : classInfo.methodModifiers[index];
             final int len = (methodName == CONSTRUCTOR_ALIAS) ? classInfo.constructorParamTypes[index].length : classInfo.methodParamTypes[index].length;
             if (len == paramsCount || isVarArgs(modifier) && paramsCount >= len - 1) return index;
@@ -1055,13 +1089,13 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         if (index == null) {
             Class[] paramTypes = new Class[args.length];
             for (int i = 0; i < args.length; i++) paramTypes[i] = args[i] == null ? null : args[i].getClass();
-            index = indexOfMethod(methodName, paramTypes);
+            index = indexOfMethod(null, methodName, paramTypes);
         }
         return invokeWithIndex(instance, index, args);
     }
 
     public <T, V> T invokeWithTypes(ANY instance, String methodName, Class[] paramTypes, V... args) {
-        return invokeWithIndex(instance, indexOfMethod(methodName, paramTypes), args);
+        return invokeWithIndex(instance, indexOfMethod(null, methodName, paramTypes), args);
     }
 
     @Override
@@ -1082,7 +1116,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     }
 
     public <T> ANY newInstanceWithTypes(Class[] paramTypes, T... args) {
-        return newInstanceWithIndex(indexOfMethod(CONSTRUCTOR_ALIAS, paramTypes), args);
+        return newInstanceWithIndex(indexOfMethod(null, CONSTRUCTOR_ALIAS, paramTypes), args);
     }
 
     public ANY newInstance(Object... args) {
@@ -1090,7 +1124,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         if (index == null) {
             Class[] paramTypes = new Class[args.length];
             for (int i = 0; i < args.length; i++) paramTypes[i] = args[i] == null ? null : args[i].getClass();
-            index = indexOfMethod(CONSTRUCTOR_ALIAS, paramTypes);
+            index = indexOfMethod(null, CONSTRUCTOR_ALIAS, paramTypes);
         }
         return newInstanceWithIndex(index, args);
     }
