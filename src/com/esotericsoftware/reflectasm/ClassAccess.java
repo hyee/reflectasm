@@ -1,9 +1,6 @@
 package com.esotericsoftware.reflectasm;
 
 import com.esotericsoftware.reflectasm.util.NumberUtils;
-import jdk.internal.org.objectweb.asm.*;
-import jdk.internal.org.objectweb.asm.Type;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -14,13 +11,22 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.esotericsoftware.reflectasm.util.NumberUtils.*;
+/* For java8
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
-
-/*import org.objectweb.asm.*;
+import jdk.internal.org.objectweb.asm.*;
+import jdk.internal.org.objectweb.asm.Type;
+import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+*/
+/* For java 7
+import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 import static org.objectweb.asm.Opcodes.*;
-import org.objectweb.asm.util.CheckClassAdapter;*/
-
+import org.objectweb.asm.util.CheckClassAdapter;
+*/
+import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import jdk.internal.org.objectweb.asm.*;
+import jdk.internal.org.objectweb.asm.Type;
+import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 @SuppressWarnings({"UnusedDeclaration", "Convert2Diamond", "ConstantConditions", "Unsafe", "deprecation"})
 public class ClassAccess<ANY> implements Accessor<ANY> {
     public final static int HASH_BUCKETS = Integer.valueOf(System.getProperty("reflectasm.hash_buckets", "16"));
