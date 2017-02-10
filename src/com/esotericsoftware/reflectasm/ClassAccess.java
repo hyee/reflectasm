@@ -347,7 +347,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         final String clzInfoDesc = Type.getDescriptor(ClassInfo.class);
         final String genericName = "<L" + classNameInternal + ";>;";
         final String clzInfoGenericDesc = "L" + Type.getInternalName(ClassInfo.class) + genericName;
-        cw.visit(V1_7, ACC_PUBLIC + ACC_SUPER, accessClassNameInternal, "L" + baseName + ";L" + accessorPath + genericName, baseName, new String[]{accessorPath});
+        cw.visit(V1_7, ACC_PUBLIC + ACC_SUPER + ACC_FINAL, accessClassNameInternal, "L" + baseName + ";L" + accessorPath + genericName, baseName, new String[]{accessorPath});
         String className = classNameInternal;
         try {
             int position = className.lastIndexOf("$");
@@ -447,7 +447,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     private static void insertNewRawInstance(ClassVisitor cw, String classNameInternal, String accessClassNameInternal) {
         MethodVisitor mv;
         {
-            mv = cw.visitMethod(ACC_PUBLIC, "newInstance", "()L" + classNameInternal + ";", null, null);
+            mv = cw.visitMethod(ACC_PUBLIC + ACC_FINAL, "newInstance", "()L" + classNameInternal + ";", null, null);
             mv.visitCode();
             mv.visitTypeInsn(NEW, classNameInternal);
             mv.visitInsn(DUP);
@@ -457,7 +457,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             mv.visitEnd();
         }
         {
-            mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "newInstance", "()Ljava/lang/Object;", null, null);
+            mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC + ACC_FINAL, "newInstance", "()Ljava/lang/Object;", null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitMethodInsn(INVOKESPECIAL, accessClassNameInternal, "newInstance", "()L" + classNameInternal + ";");
@@ -469,7 +469,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     private static void insertNewInstance(ClassVisitor cw, String classNameInternal, ClassInfo info, String accessClassNameInternal) {
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "newInstanceWithIndex", "(I[Ljava/lang/Object;)L" + classNameInternal + ";", "<T:Ljava/lang/Object;>(I[TT;)L" + classNameInternal + ";", null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS + ACC_FINAL, "newInstanceWithIndex", "(I[Ljava/lang/Object;)L" + classNameInternal + ";", "<T:Ljava/lang/Object;>(I[TT;)L" + classNameInternal + ";", null);
         mv.visitCode();
 
         int n = info.constructorCount;
@@ -518,7 +518,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         mv.visitMaxs(0, 0);
         mv.visitEnd();
 
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "newInstanceWithIndex", "(I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC + ACC_FINAL, "newInstanceWithIndex", "(I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ILOAD, 1);
@@ -531,7 +531,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     private static void insertInvoke(ClassVisitor cw, String classNameInternal, ClassInfo info, String accessClassNameInternal) {
         MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, "invokeWithIndex", "(L" + classNameInternal + ";I[Ljava/lang/Object;)Ljava/lang/Object;", "<T:Ljava/lang/Object;V:Ljava/lang/Object;>(L" + classNameInternal + ";I[TV;)TT;", null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS + ACC_FINAL, "invokeWithIndex", "(L" + classNameInternal + ";I[Ljava/lang/Object;)Ljava/lang/Object;", "<T:Ljava/lang/Object;V:Ljava/lang/Object;>(L" + classNameInternal + ";I[TV;)TT;", null);
         mv.visitCode();
 
         int n = info.methodCount;
@@ -591,7 +591,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         mv.visitMaxs(0, 0);
         mv.visitEnd();
 
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "invokeWithIndex", "(Ljava/lang/Object;I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC + ACC_FINAL, "invokeWithIndex", "(Ljava/lang/Object;I[Ljava/lang/Object;)Ljava/lang/Object;", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
@@ -606,7 +606,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     static private void insertSetObject(ClassVisitor cw, String classNameInternal, ClassInfo info, String accessClassNameInternal) {
         int maxStack = 6;
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set", "(L" + classNameInternal + ";ILjava/lang/Object;)V", "<T:Ljava/lang/Object;V:Ljava/lang/Object;>(L" + classNameInternal + ";ITV;)V", null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_FINAL, "set", "(L" + classNameInternal + ";ILjava/lang/Object;)V", "<T:Ljava/lang/Object;V:Ljava/lang/Object;>(L" + classNameInternal + ";ITV;)V", null);
         mv.visitCode();
         mv.visitVarInsn(ILOAD, 2);
 
@@ -636,7 +636,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         mv.visitMaxs(maxStack, 4);
         mv.visitEnd();
 
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC + ACC_FINAL, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
@@ -651,7 +651,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     static private void insertGetObject(ClassVisitor cw, String classNameInternal, ClassInfo info, String accessClassNameInternal) {
         int maxStack = 6;
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get", "(L" + classNameInternal + ";I)Ljava/lang/Object;", "<T:Ljava/lang/Object;>(L" + classNameInternal + ";I)TT;", null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_FINAL, "get", "(L" + classNameInternal + ";I)Ljava/lang/Object;", "<T:Ljava/lang/Object;>(L" + classNameInternal + ";I)TT;", null);
         mv.visitCode();
         mv.visitVarInsn(ILOAD, 2);
 
@@ -684,7 +684,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         mv.visitMaxs(0, 0);
         mv.visitEnd();
 
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;", null, null);
+        mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC + ACC_FINAL, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
