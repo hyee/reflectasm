@@ -51,11 +51,15 @@ public class ClassAccessTest extends TestCase {
         access.newInstance(inner);
     }
 
-    public void testOverload() {
+    public void testOverload0(ClassAccess... accesses) {
         ClassAccess<BaseClass> access1 = ClassAccess.access(BaseClass.class);
-        ClassAccess access2 = ClassAccess.access(ChildClass.class, ".");
+        ClassAccess access2;
+        if (accesses.length == 0) access2 = ClassAccess.access(ChildClass.class, ".");
+        else access2 = accesses[0];
+
         ChildClass child = (ChildClass) access2.newInstance(this);
         assertEquals("test10", access2.invoke(child, "test0"));
+        int index = access2.indexOfMethod("test1");
         assertEquals("test11", access2.invoke(child, "test1"));
         assertEquals("test02", access2.invoke(child, "test2"));
         assertEquals("test01", access1.invoke(child, "test1"));
@@ -63,13 +67,28 @@ public class ClassAccessTest extends TestCase {
         assertEquals(3, access2.get(child, "x"));
         assertEquals(4, access2.get(child, "y"));
         assertEquals(5, access2.get(child, "z"));
+        //assertEquals(6, access2.get(child, "o"));
+        //Invoke the overloaded parts of BaseClass
         int fieldIndex = access2.indexOfField(BaseClass.class, "x");
         int methodIndex = access2.indexOfMethod(BaseClass.class, "test1");
         assertEquals("test01", access2.invokeWithIndex(child, methodIndex));
         assertEquals(1, access2.get(child, fieldIndex));
-        access2.set(child, fieldIndex, 9);
-        assertEquals(9, access2.get(child, fieldIndex));
-        assertEquals(3, access2.get(child, "x"));
+        if ((Boolean) access2.isInvokeWithMethodHandle.get() == false) {
+            access2.set(child, fieldIndex, 9);
+            assertEquals(9, access2.get(child, fieldIndex));
+            assertEquals(3, access2.get(child, "x"));
+            assertEquals(6, access2.get(child, "o"));
+        }
+    }
+
+    public void testOverload() {
+        testOverload0();
+    }
+
+    public void testOverloadWithLambda() throws Throwable {
+        ClassAccess access2 = ClassAccess.access(ChildClass.class, ".");
+        access2.isInvokeWithMethodHandle.set(true);
+        testOverload0(access2);
     }
 
     public void testCase2() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
@@ -175,7 +194,13 @@ public class ClassAccessTest extends TestCase {
         }
     }
 
-    class BaseClass {
+    interface BaseInterface {
+        int o = 6;
+
+        String test0();
+    }
+
+    class BaseClass implements BaseInterface {
         public int x = 1;
         int y = 2;
         int z = 5;

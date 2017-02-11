@@ -3,6 +3,8 @@ package com.esotericsoftware.reflectasm;
 public interface Accessor<ANY> {
     abstract public ClassInfo getInfo();
 
+    abstract public Object[] getParents();
+
     abstract public <V> ANY newInstanceWithIndex(int constructorIndex, V... args);
 
     abstract public ANY newInstance();

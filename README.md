@@ -17,6 +17,7 @@ This is the revised version, some differences from `EsotericSoftware/reflectasm`
 * Supports accessing non-public class/method/field
 * Uses of generic types to reduce unnecessary explicit/implicit casting
 * Reduces the generation of proxy classes
+* Supports [MethodHandle](https://docs.oracle.com/javase/8/docs/api/java/lang/invoke/MethodHandle.html#asVarargsCollector-java.lang.Class-)
 
 To support <b>Java 7</b>, just change the imports in class `ClassAccess` to add back the dependency of `asm-xxx.jar`
 
@@ -30,22 +31,20 @@ The benchmark code can be found in the `benchmark` directory, test environment:
 * VM : Java 8u112 x86
 * OS : Win10 x64, and as a laptop, the result is not very stable<br/> 
 
-| VM | Item | Direct | ReflectASM | Reflection |
-| --- | --- |  ---------  |  ---------  |  ---------  |
-| Server VM | Field Set+Get | 1.24 ns | 7.56 ns | 13.63 ns |
-| Server VM | Method Call | 0.88 ns | 3.55 ns | 4.94 ns |
-| Server VM | Constructor | 5.15 ns | 7.33 ns | 10.33 ns |
-| Client VM | Field Set+Get | 2.56 ns | 13.89 ns | 211.80 ns |
-| Client VM | Method Call | 2.28 ns | 8.27 ns | 48.78 ns |
-| Client VM | Constructor | 69.57 ns | 73.54 ns | 154.13 ns |
+| VM | Item | Direct | DirectMethodHandle | ReflectASM | Reflection |
+| --- | --- |  ---------  |  ---------  |  ---------  |  ---------  |
+| Server VM | Field Set+Get | 1.17 ns | 7.83 ns | 6.88 ns | 12.51 ns |
+| Server VM | Method Call | 0.86 ns | 4.14 ns | 3.30 ns | 4.51 ns |
+| Server VM | Constructor | 5.10 ns | 7.51 ns | 6.86 ns | 8.62 ns |
+| Client VM | Field Set+Get | 2.49 ns | 16.30 ns | 13.75 ns | 209.21 ns |
+| Client VM | Method Call | 2.13 ns | 10.54 ns | 8.32 ns | 48.85 ns |
+| Client VM | Constructor | 71.00 ns | 192.87 ns | 74.80 ns | 154.43 ns |
 
 #### Server VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x183&chd=t:111942264,680500117,1226891277,79043649,319279414,444792338,463928334,660043205,930026772&chds=0,1226891277&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Server VM)&chs=700x237&chd=t:104886099,704401675,619611373,1125590088,77170418,372776726,296855382,405673821,458851833,675729992,616966498,775650205&chds=0,1125590088&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - DirectMethodHandle|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - DirectMethodHandle|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - DirectMethodHandle|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 #### Client VM
-![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x183&chd=t:76672841,416837942,6354088512,68303361,248084480,1463360435,2087202542,2206321850,4623966407&chds=0,6354088512&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
-
-
+![](http://chart.apis.google.com/chart?chtt=&Java 1.8.0_112 x86(Client VM)&chs=700x237&chd=t:74650984,489015485,412433873,6276273031,63781455,316114537,249572650,1465394076,2130048135,5786071571,2244086000,4632780627&chds=0,6276273031&chxl=0:|Constructor - Reflection|Constructor - ReflectASM|Constructor - DirectMethodHandle|Constructor - Direct|Method Call - Reflection|Method Call - ReflectASM|Method Call - DirectMethodHandle|Method Call - Direct|Field Set+Get - Reflection|Field Set+Get - ReflectASM|Field Set+Get - DirectMethodHandle|Field Set+Get - Direct&cht=bhg&chbh=10&chxt=y&chco=660000|660033|660066|660099|6600CC|6600FF|663300|663333|663366|663399|6633CC|6633FF|666600|666633|666666)
 
 ## Usage
 
@@ -123,13 +122,17 @@ Class reflection with ReflectASM(F=FieldAccess,M=MethodAccess,C=ConstructorAcces
 | ClassAccess.*method* | Equivalence | Description |
 | -------------------- | ---------- | ----------- | 
 | *static* access(Class,[dump dir]) | (F/M/C).access | returns a wrapper object of the underlying class, in case of the 2nd parameter is specified, dumps the dynamic classes into the target folder |
-| IndexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
-| IndexesOf(Class,name,type)| | returns an index array that matches the given class,name and type(`field`/`method`/`<new>`) |
-| IndexOf(name,type)| | returns the first element of `IndexesOf`|
-| IndexOfField(name/Field) | F.getIndex | returns the field index that matches the given input|
-| IndexOfField(Class,name) | | returns the field index that defined in the target class|
-| IndexOfMethod(name/Method) | M.getIndex | returns the first method index that matches the given input|
-| IndexOfMethod(Class,name,{argTypes}) | | returns the first method index that defined in the target class|
+| indexesOf(name,type)| | returns an index array that matches the given name and type(`field`/`method`/`<new>`) |
+| indexesOf(Class,name,type)| | returns an index array that matches the given class,name and type(`field`/`method`/`<new>`) |
+| indexOf(name,type)| | returns the first element of `indexesOf`|
+| getHandleWithIndex(index,type) | | returns a MethodHandle regards to the index(from `indexOf`), type here can be `set/get/method/<new>` |
+| getHandle(Class,name,type,{argtypes}) | | returns a MethodHandle regards to input parameter types |
+| getHandleWithArgs(Class,name,type,{args}) | | returns a MethodHandle regards to input parameter values |
+| invokeWithMethodHandle(instance,index,type,{args}|| if option `invokeWithMethodHandle` is `true`(default as `false`, then all below methods will use MethodHandle to process, instead of `accessor`|
+| indexOfField(name/Field) | F.getIndex | returns the field index that matches the given input|
+| indexOfField(Class,name) | | returns the field index that defined in the target class|
+| indexOfMethod(name/Method) | M.getIndex | returns the first method index that matches the given input|
+| indexOfMethod(Class,name,{argTypes}) | | returns the first method index that defined in the target class|
 | indexOfMethod(name,argCount/{argTypes}) | (M/C).getIndex | returns the first index that matches the given input|
 | indexOfConstructor(constructor) | C.getIndex | returns the index that matches the given constructor|
 | set(instance,Name/index,value) | F.set | Assign value to the specific field |
@@ -170,7 +173,7 @@ int methodIndex=access.indexOfMethod(<superClass>,<methodName>,{<parameterTypes>
 access.invokeWithIndex(instance,methodIndex,{arguments});
 ```
 
-Refer to test case `com.esotericsoftware.reflectasm.testOverload()` for more examples`
+Refer to test case `com.hyee.reflectmeta.testOverload()/testOverloadWithLambda()` for more examples`
 
 
 ## Exceptions
@@ -237,9 +240,9 @@ public class TestObject {
 And then the auto-generated wrapper class is shown below, you can also call `ClassAccess.access(TestObject.class,".")` to dump the wrapper class:
 ```java
 package asm.test;
-import com.esotericsoftware.reflectasm.Accessor;
-import com.esotericsoftware.reflectasm.ClassAccess;
-import com.esotericsoftware.reflectasm.ClassInfo;
+import com.hyee.reflectmeta.Accessor;
+import com.hyee.reflectmeta.ClassAccess;
+import com.hyee.reflectmeta.ClassInfo;
 import sun.reflect.MagicAccessorImpl;
 
 public class TestObject extends MagicAccessorImpl implements Accessor<test.TestObject> {
