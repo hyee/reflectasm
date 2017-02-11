@@ -7,16 +7,18 @@ package com.esotericsoftware.reflectasm;
 
 import com.esotericsoftware.reflectasm.MethodAccessTest.EmptyClass;
 
-public final class test implements Accessor<EmptyClass> {
-    static final ClassInfo<EmptyClass> classInfo = new ClassInfo();
-    private Object[] parents = new Object[10];
+import java.lang.invoke.MethodHandle;
 
-    public Object[] getParents() {return parents;}
+public final class test implements Accessor<EmptyClass> {
+    static final ClassInfo<EmptyClass> classInfo;
+    static MethodHandle[][] methodHandles;
 
     public test() {
     }
 
     static {
+        methodHandles = new MethodHandle[3][12345];
+        classInfo = new ClassInfo();
         classInfo.methodNames = new String[0];
         classInfo.methodParamTypes = new Class[0][];
         classInfo.returnTypes = new Class[0];
@@ -37,6 +39,11 @@ public final class test implements Accessor<EmptyClass> {
 
     public ClassInfo<EmptyClass> getInfo() {
         return classInfo;
+    }
+
+    @Override
+    public MethodHandle[][] getMethodHandles() {
+        return methodHandles;
     }
 
     public final <T, V> T invokeWithIndex(EmptyClass var1, int var2, V... var3) {

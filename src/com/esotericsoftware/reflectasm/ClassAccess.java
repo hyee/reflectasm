@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -54,18 +53,9 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     static final String accessorPath = Type.getInternalName(Accessor.class);
     static final String classInfoPath = Type.getInternalName(ClassInfo.class);
     static ReentrantReadWriteLock[] locks = new ReentrantReadWriteLock[HASH_BUCKETS];
-    static MethodHandles.Lookup lookup = MethodHandles.lookup();
+    public static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     public MethodHandle methodHandles[][];
-    public static final MethodHandle[] LOOKER = new MethodHandle[8];
-    public static final int LOOKUP_CONSTRUCTOR = 0;
-    public static final int LOOKUP_GETTER = 1;
-    public static final int LOOKUP_STATIC_GETTER = 2;
-    public static final int LOOKUP_SETTER = 3;
-    public static final int LOOKUP_STATIC_SETTER = 4;
-    public static final int LOOKUP_VIRTUAL = 7;
-    public static final int LOOKUP_SPECIAL = 5;
-    public static final int LOOKUP_STATIC = 6;
 
     ThreadLocal<Boolean> isInvokeWithMethodHandle = new ThreadLocal<Boolean>();
 
@@ -74,18 +64,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             Field field = lookup.getClass().getDeclaredField("allowedModes");
             field.setAccessible(true);
             field.set(lookup, -1); // = MethodHandles.Lookup.TRUSTED
-            final Class clz = MethodHandles.Lookup.class;
-            final Class rclz = Class.class;
-            final Class mclz = MethodType.class;
-            final Class sclz = String.class;
-            LOOKER[LOOKUP_CONSTRUCTOR] = lookup.unreflectSpecial(clz.getDeclaredMethod("findConstructor", rclz, mclz), clz);
-            LOOKER[LOOKUP_GETTER] = lookup.unreflectSpecial(clz.getDeclaredMethod("findGetter", rclz, sclz, rclz), clz);
-            LOOKER[LOOKUP_STATIC_GETTER] = lookup.unreflectSpecial(clz.getDeclaredMethod("findStaticGetter", rclz, sclz, rclz), clz);
-            LOOKER[LOOKUP_SETTER] = lookup.unreflectSpecial(clz.getDeclaredMethod("findSetter", rclz, sclz, rclz), clz);
-            LOOKER[LOOKUP_STATIC_SETTER] = lookup.unreflectSpecial(clz.getDeclaredMethod("findStaticSetter", rclz, sclz, rclz), clz);
-            LOOKER[LOOKUP_SPECIAL] = lookup.unreflectSpecial(clz.getDeclaredMethod("findSpecial", rclz, sclz, mclz, rclz), clz);
-            LOOKER[LOOKUP_STATIC] = lookup.unreflectSpecial(clz.getDeclaredMethod("findStatic", rclz, sclz, mclz), clz);
-            LOOKER[LOOKUP_VIRTUAL] = lookup.unreflectSpecial(clz.getDeclaredMethod("findVirtual", rclz, sclz, mclz), clz);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -107,9 +85,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     protected ClassAccess(Accessor accessor) {
         this.classInfo = accessor.getInfo();
         this.accessor = accessor;
-        if (classInfo.handles != null) this.methodHandles = classInfo.handles;
-        else
-            this.methodHandles = new MethodHandle[3][Math.max(Math.max(classInfo.constructorCount, classInfo.methodCount), classInfo.fieldCount * 2)];
+        this.methodHandles = accessor.getMethodHandles();
     }
 
     public static boolean isVarArgs(int modifier) {
@@ -120,7 +96,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public static void buildIndex(ClassInfo info) {
         if (info == null || info.attrIndex != null) return;
-        info.handles = (MethodHandle[][]) caches[info.bucket].get("handles");
         info.methodCount = info.methodNames.length;
         info.fieldCount = info.fieldNames.length;
         info.constructorCount = info.constructorModifiers.length;
@@ -151,7 +126,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         final String accessClassName = (ACCESS_CLASS_PREFIX + className).replace("$", "");
         final String source = String.valueOf(type.getResource(""));
         Class<ANY> accessClass = null;
-        MethodHandle[][] handles = null;
         Accessor<ANY> accessor;
         byte[] bytes = null;
         ClassInfo<ANY> info = null;
@@ -206,23 +180,19 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 ArrayList<Constructor<?>> constructors = new ArrayList<Constructor<?>>();
                 ArrayList<Field> fields = new ArrayList<Field>();
                 collectMembers(type, methods, fields, constructors);
-                handles = new MethodHandle[3][];
                 info = new ClassInfo();
                 info.bucket = bucket;
-                info.handles = handles;
                 int n = constructors.size();
                 info.constructorModifiers = new Integer[n];
                 info.constructorParamTypes = new Class[n][];
                 info.constructorDescs = new String[n];
                 info.constructorCount = n;
-                handles[0] = new MethodHandle[n];
                 for (int i = 0; i < n; i++) {
                     Constructor<?> c = constructors.get(i);
                     info.constructorModifiers[i] = c.getModifiers();
                     if (c.isVarArgs()) info.constructorModifiers[i] |= MODIFIER_VARARGS;
                     info.constructorParamTypes[i] = c.getParameterTypes();
                     info.constructorDescs[i] = Type.getConstructorDescriptor(c);
-                    handles[0][i] = lookup.unreflectConstructor(c);
                 }
 
                 n = methods.size();
@@ -233,7 +203,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 info.methodNames = new String[n];
                 info.baseClass = type;
                 info.methodCount = n;
-                handles[1] = new MethodHandle[n];
                 for (int i = 0; i < n; i++) {
                     Method m = methods.get(i);
                     info.methodModifiers[i] = m.getModifiers();
@@ -245,9 +214,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     info.returnTypes[n + i] = m.getDeclaringClass();
                     info.methodNames[i] = m.getName();
                     info.methodDescs[i] = new String[]{m.getName(), Type.getMethodDescriptor(m), Type.getInternalName(m.getDeclaringClass())};
-                    if (Modifier.isAbstract(info.methodModifiers[i]) || Modifier.isStatic(info.methodModifiers[i]))
-                        handles[1][i] = lookup.unreflect(m);
-                    else handles[1][i] = lookup.unreflectSpecial(m, m.getDeclaringClass());
                 }
 
                 n = fields.size();
@@ -256,7 +222,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 info.fieldTypes = new Class[n * 2];
                 info.fieldDescs = new String[n][2];
                 info.fieldCount = n;
-                handles[2] = new MethodHandle[n * 2];
                 for (int i = 0; i < n; i++) {
                     Field f = fields.get(i);
                     info.fieldNames[i] = f.getName();
@@ -265,10 +230,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     info.fieldModifiers[i] = f.getModifiers();
                     info.fieldDescs[i] = new String[]{f.getName(), Type.getDescriptor(f.getType()), Type.getInternalName(f.getDeclaringClass())};
                     info.fieldModifiers[i] |= f.getDeclaringClass().isInterface() ? Modifier.INTERFACE : 0;
-                    if (!Modifier.isInterface(info.fieldModifiers[i])) {
-                        handles[2][i] = lookup.unreflectGetter(f);
-                        handles[2][i + n] = lookup.unreflectSetter(f);
-                    }
                 }
 
                 String accessClassNameInternal = accessClassName.replace('.', '/');
@@ -295,7 +256,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             }
 
             if (loader == null) loader = AccessClassLoader.get(type);
-            caches[bucket].put("handles", handles);
             if (IS_DEBUG) CheckClassAdapter.verify(new ClassReader(bytes), loader, false, new PrintWriter(System.out));
             try {
                 accessClass = (Class<ANY>) UnsafeHolder.theUnsafe.defineClass(accessClassName, bytes, 0, bytes.length, loader, type.getProtectionDomain());
@@ -311,7 +271,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             ex.printStackTrace();
             throw new RuntimeException("Error constructing method access class: " + accessClassName + ": " + ex.getMessage(), ex);
         } finally {
-            if (loader != null) caches[bucket].remove("handles");
             if ((lockFlag & 2) > 0) lock.writeLock().unlock();
             if ((lockFlag & 1) > 0) lock.readLock().unlock();
         }
@@ -434,18 +393,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             }
         } catch (Throwable e) {}
         MethodVisitor mv;
-        //getParents
-        {
-            FieldVisitor fv = cw.visitField(ACC_PRIVATE, "parents", "[Ljava/lang/Object;", null, null);
-            fv.visitEnd();
-            mv = cw.visitMethod(ACC_PUBLIC, "getParents", "()[Ljava/lang/Object;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, accessClassNameInternal, "parents", "[Ljava/lang/Object;");
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(1, 1);
-            mv.visitEnd();
-        }
+
         //Constructor
         {
 
@@ -453,10 +401,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitMethodInsn(INVOKESPECIAL, baseName, "<init>", "()V");
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitIntInsn(BIPUSH, 10);
-            mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-            mv.visitFieldInsn(PUTFIELD, accessClassNameInternal, "parents", "[Ljava/lang/Object;");
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -464,14 +408,39 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
         //Static block
         {
-            FieldVisitor fv = cw.visitField(ACC_FINAL + ACC_STATIC, "classInfo", clzInfoDesc, clzInfoDesc.substring(0, clzInfoDesc.length() - 1) + "<L" + classNameInternal + ";>;", null);
-            fv.visitEnd();
 
+            FieldVisitor fv = cw.visitField(ACC_STATIC, "methodHandles", "[[Ljava/lang/invoke/MethodHandle;", null, null);
+            fv.visitEnd();
+            mv = cw.visitMethod(ACC_PUBLIC, "getMethodHandles", "()[[Ljava/lang/invoke/MethodHandle;", null, null);
+            mv.visitCode();
+            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "methodHandles", "[[Ljava/lang/invoke/MethodHandle;");
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+
+            fv = cw.visitField(ACC_FINAL + ACC_STATIC, "classInfo", clzInfoDesc, clzInfoDesc.substring(0, clzInfoDesc.length() - 1) + "<L" + classNameInternal + ";>;", null);
+            fv.visitEnd();
+            mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, "()" + clzInfoGenericDesc, null);
+            mv.visitCode();
+            mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+
+        }
+
+        {//Static block
             mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
             mv.visitCode();
+
+            mv.visitInsn(ICONST_3);
+            mv.visitIntInsn(SIPUSH, Math.max(Math.max(info.constructorCount, info.methodCount), info.fieldCount * 2));
+            mv.visitMultiANewArrayInsn("[[Ljava/lang/invoke/MethodHandle;", 2);
+            mv.visitFieldInsn(PUTSTATIC, accessClassNameInternal, "methodHandles", "[[Ljava/lang/invoke/MethodHandle;");
+
             mv.visitTypeInsn(Opcodes.NEW, classInfoPath);
             mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V");
+            mv.visitMethodInsn(INVOKESPECIAL, classInfoPath, "<init>", "()V", false);
             mv.visitFieldInsn(PUTSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
 
             insertArray(mv, info.methodNames, "methodNames", accessClassNameInternal);
@@ -506,13 +475,6 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             mv.visitMaxs(0, 0);
             mv.visitEnd();
         }
-
-        mv = cw.visitMethod(ACC_PUBLIC, "getInfo", "()" + clzInfoDesc, "()" + clzInfoGenericDesc, null);
-        mv.visitCode();
-        mv.visitFieldInsn(GETSTATIC, accessClassNameInternal, "classInfo", clzInfoDesc);
-        mv.visitInsn(ARETURN);
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
     }
 
     private static byte[] byteCode(ClassInfo info, String accessClassNameInternal, String classNameInternal) {
@@ -921,56 +883,28 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         int d1 = (type.equals(SETTER) || type.equals(GETTER)) ? 2 : type.equals(METHOD) ? 1 : 0;
         int d2 = type.equals(SETTER) ? classInfo.fieldCount + index : index;
         handle = methodHandles[d1][d2];
-        if (handle == null) {
-            int modifier;
-            String name;
-            String desc = null;
-            Class typ = null;
-            Class clz;
-            int offset;
+        if (handle == null) try {
             switch (type) {
                 case NEW:
-                    offset = LOOKUP_CONSTRUCTOR;
-                    modifier = classInfo.constructorModifiers[index];
-                    name = NEW;
-                    desc = classInfo.constructorDescs[index];
-                    clz = classInfo.baseClass;
+                    Constructor c = classInfo.baseClass.getDeclaredConstructor(classInfo.constructorParamTypes[index]);
+                    handle = lookup.unreflectConstructor(c);
                     break;
                 case METHOD:
-                    offset = LOOKUP_SPECIAL;
-                    modifier = classInfo.methodModifiers[index];
-                    name = classInfo.methodNames[index];
-                    desc = classInfo.methodDescs[index][1];
-                    clz = classInfo.returnTypes[index + classInfo.methodCount];
+                    Method m = classInfo.returnTypes[classInfo.methodCount + index].getDeclaredMethod(classInfo.methodNames[index], classInfo.methodParamTypes[index]);
+                    handle = lookup.unreflect(m);
                     break;
                 default:
-                    offset = type.equals(GETTER) ? LOOKUP_GETTER : LOOKUP_SETTER;
-                    modifier = classInfo.fieldModifiers[index];
-                    name = classInfo.fieldNames[index];
-                    typ = classInfo.fieldTypes[index];
-                    clz = classInfo.fieldTypes[index + classInfo.fieldCount];
+                    Field f = classInfo.fieldTypes[classInfo.fieldCount + index].getDeclaredField(classInfo.fieldNames[index]);
+                    if (type.equals(GETTER)) handle = lookup.unreflectGetter(f);
+                    else handle = lookup.unreflectSetter(f);
                     break;
             }
-            int adj = Modifier.isStatic(modifier) ? 1 : 0;
-            offset += adj;
-
-            ArrayList ary = new ArrayList(4);
-            ary.add(lookup);
-            ary.add(clz);
-            if (offset != LOOKUP_CONSTRUCTOR) ary.add(name);
-            if (desc != null) {
-                MethodType methodType = MethodType.fromMethodDescriptorString(desc, classInfo.baseClass.getClassLoader());
-                ary.add(methodType);
-                if (offset == LOOKUP_SPECIAL) ary.add(classInfo.baseClass);
-            } else ary.add(typ);
-
-            try {
-                handle = (MethodHandle) LOOKER[offset].invokeWithArguments(ary);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
             methodHandles[d1][d2] = handle;
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+            throw new IllegalArgumentException(throwable.getMessage());
         }
+
         return handle;
     }
 
@@ -1285,26 +1219,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             MethodHandle handle = getHandleWithIndex(index, type);
             if (!type.equals(NEW)) {
                 Class clz = type.equals(METHOD) ? classInfo.returnTypes[classInfo.methodCount + index] : classInfo.fieldTypes[classInfo.fieldCount + index];
-                Object target = instance;
-                if (clz != classInfo.baseClass) {
-                    target = clz.cast(target);
-                    Object[] parents = accessor.getParents();
-                    if (parents[0] == null) {
-                        try {
-                            parents[0] = accessor.get(instance, indexOfField("this$0"));
-                        } catch (Exception e) {
-                            //e.printStackTrace();
-                        }
-                    }
-                    for (Object obj : parents) {
-                        if (obj == null) break;
-                        if (obj.getClass() == clz) {
-                            target = obj;
-                            break;
-                        }
-                    }
-                }
-                handle = handle.bindTo(target);
+                handle = handle.bindTo(instance);
             }
             return (T) handle.invokeWithArguments(args);
         } catch (Throwable e) {
@@ -1336,8 +1251,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     }
 
     @Override
-    public Object[] getParents() {
-        return new Object[0];
+    public MethodHandle[][] getMethodHandles() {
+        return new MethodHandle[0][];
     }
 
     public ANY newInstance() {

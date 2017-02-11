@@ -1,9 +1,11 @@
 package com.esotericsoftware.reflectasm;
 
+import java.lang.invoke.MethodHandle;
+
 public interface Accessor<ANY> {
     abstract public ClassInfo getInfo();
 
-    abstract public Object[] getParents();
+    abstract public MethodHandle[][] getMethodHandles();
 
     abstract public <V> ANY newInstanceWithIndex(int constructorIndex, V... args);
 

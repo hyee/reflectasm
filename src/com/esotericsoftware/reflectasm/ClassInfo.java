@@ -4,12 +4,10 @@ package com.esotericsoftware.reflectasm;
  * Created by Will on 2017/2/2.
  */
 
-import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
 public class ClassInfo<ANY> {
     public int bucket;
-    public MethodHandle[][] handles;
     public String[] fieldNames;
     public Class[] fieldTypes;
     public Integer[] fieldModifiers;
