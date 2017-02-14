@@ -8,18 +8,28 @@ package com.esotericsoftware.reflectasm;
 import com.esotericsoftware.reflectasm.MethodAccessTest.EmptyClass;
 
 import java.lang.invoke.MethodHandle;
+import java.util.EnumMap;
 
 public final class test implements Accessor<EmptyClass> {
+    Class<? super EmptyClass> super_;
     static final ClassInfo<EmptyClass> classInfo;
     static MethodHandle[][] methodHandles;
 
+    public test castTo(Class<? super EmptyClass> clz) {
+        return new test();
+    };
+
     public test() {
+    }
+
+    static void methodNames() {
+        classInfo.methodNames = new String[0];
     }
 
     static {
         methodHandles = new MethodHandle[3][12345];
         classInfo = new ClassInfo();
-        classInfo.methodNames = new String[0];
+        methodNames();
         classInfo.methodParamTypes = new Class[0][];
         classInfo.returnTypes = new Class[0];
         classInfo.methodModifiers = new Integer[0];

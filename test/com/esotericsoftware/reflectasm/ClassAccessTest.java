@@ -12,6 +12,10 @@ import java.util.concurrent.Executors;
  * Created by Will on 2017/2/6.
  */
 public class ClassAccessTest extends TestCase {
+    public void testBigClass() throws ClassNotFoundException {
+        Class clz=Class.forName("oracle.jdbc.driver.T4CConnection");
+        ClassAccess.access(clz,".");
+    }
     public void testCase1() {
         //Generic style
         ClassAccess.access(TestObject.class, ".");
