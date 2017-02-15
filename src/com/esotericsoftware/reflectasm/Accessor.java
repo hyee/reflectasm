@@ -2,8 +2,7 @@ package com.esotericsoftware.reflectasm;
 
 import java.lang.invoke.MethodHandle;
 
-    public interface Accessor<ANY> {
-
+public interface Accessor<ANY> {
     abstract public ClassInfo getInfo();
 
     abstract public MethodHandle[][] getMethodHandles();
