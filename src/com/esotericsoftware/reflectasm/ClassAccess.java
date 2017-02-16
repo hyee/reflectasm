@@ -1199,10 +1199,11 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     minDistance = min;
                 }
             }
+            if (result < -1) result = -1;
             if (IS_CACHED) {
                 lock(bucket, "write", true);
                 lockFlag |= 2;
-                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + Math.max(-1, result)));
+                caches[bucket].put(signature, Integer.valueOf(minDistance * 10000 + result));
             }
             if (result >= 0 && argCount == 0 && paramTypes[result].length == 0) return result;
             if (result < 0 || minDistance == 0 //
