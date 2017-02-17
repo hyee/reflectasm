@@ -117,13 +117,9 @@ class AccessClassLoader extends ClassLoader {
         return defineClassMethod;
     }
 
-    protected java.lang.Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         // These classes come from the classloader that loaded AccessClassLoader.
         if (name.equals(ClassAccess.class.getName())) return ClassAccess.class;
-        if (name.equals(FieldAccess.class.getName())) return FieldAccess.class;
-        if (name.equals(MethodAccess.class.getName())) return MethodAccess.class;
-        if (name.equals(ConstructorAccess.class.getName())) return ConstructorAccess.class;
-        if (name.equals(PublicConstructorAccess.class.getName())) return PublicConstructorAccess.class;
         // All other classes come from the classloader that loaded the type we are accessing.
         return super.loadClass(name, resolve);
     }

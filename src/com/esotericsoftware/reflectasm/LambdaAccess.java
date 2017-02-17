@@ -12,7 +12,7 @@ public class LambdaAccess extends ClassAccess {
     }
 
     public CallSite getCallsite(int index, String type) {
-        MethodHandle handle=getHandleWithIndex(index,type);
+        MethodHandle handle = getHandleWithIndex(index, type);
         return null;
     }
 }

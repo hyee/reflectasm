@@ -124,7 +124,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         String k = clz.getName() + "." + key;
         lock(bucket, "write", true);
         try {
-            caches[bucket].put(key, value);
+            caches[bucket].put(k, value);
         } finally {
             lock(bucket, "write", false);
         }
@@ -160,6 +160,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
      * @return A dynamic object that wraps the target class
      */
     public static <ANY> ClassAccess access(Class<ANY> type, String... dumpFile) {
+        if (type.isArray())
+            throw new IllegalArgumentException(String.format("Input class '%s' cannot be an array!", type.getCanonicalName()));
         String className = type.getName();
         final String accessClassName = (ACCESS_CLASS_PREFIX + className).replace("$", "");
         final String source = String.valueOf(type.getResource(""));
@@ -418,8 +420,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     iconst(mv, ((Number) item).intValue());
                     if (item instanceof Integer)
                         mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
-                    else
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
+                    else mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
                 } else mv.visitLdcInsn(item);
             }
             mv.visitInsn(AASTORE);
@@ -450,7 +451,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public final static void setInline(MethodVisitor mv) {
         AnnotationVisitor av;
-        for(String an:new String[]{"Ljava/lang/invoke/ForceInline;","Ljava/lang/invoke/LambdaForm$Compiled;"}) {
+        for (String an : new String[]{"Ljava/lang/invoke/ForceInline;", "Ljava/lang/invoke/LambdaForm$Compiled;"}) {
             av = mv.visitAnnotation(an, true);
             av.visitEnd();
         }
@@ -693,8 +694,9 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 if (i == 0) mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{classNameInternal}, 0, null);
                 else mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
 
-                if (!isStatic)
+                if (!isStatic) {
                     mv.visitVarInsn(ALOAD, 1);
+                }
 
                 String methodName = info.methodNames[i];
                 Class[] paramTypes = info.methodParamTypes[i];
@@ -1012,6 +1014,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             throwable.printStackTrace();
             throw new IllegalArgumentException(throwable.getMessage());
         }
+
         return handle;
     }
 
@@ -1178,16 +1181,16 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     //System.out.println((argTypes[i]==null?"null":argTypes[i].getCanonicalName())+" <-> "+paramTypes[index][i].getCanonicalName()+": "+dis);
                 }
                 if (argCount > last && isVarArgs) {
-                    thisDistance += stepSize;
                     if (!IS_STRICT_CONVERT) {
-                        int dis = 5;
                         final Class arrayType = paramTypes[index][last].getComponentType();
                         for (int i = last; i < argCount; i++) {
+                            thisDistance += stepSize;
+                            int dis = 5;
                             val[i] = Math.max(getDistance(argTypes[i], arrayType), getDistance(argTypes[i], paramTypes[index][last]));
                             dis = Math.min(dis, val[i]);
+                            min = Math.min(dis, min);
+                            thisDistance += dis;
                         }
-                        min = Math.min(dis, min);
-                        thisDistance += dis;
                     }
                 } else if (paramCount - argCount > 0) {
                     thisDistance -= (paramCount - argCount) * stepSize;
@@ -1323,8 +1326,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     public <T, V> T invokeWithMethodHandle(ANY instance, final int index, String type, V... args) {
         try {
             MethodHandle handle = getHandleWithIndex(index, type);
-            if (!type.equals(NEW))
-                handle = handle.bindTo(instance);
+            if (!type.equals(NEW)) handle = handle.bindTo(instance);
             return (T) handle.invokeWithArguments(args);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -1388,9 +1390,10 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public <T, V> void set(ANY instance, int fieldIndex, V value) {
         if (!IS_STRICT_CONVERT) try {
+            Class<T> clz = classInfo.fieldTypes[fieldIndex];
             if (isInvokeWithMethodHandle.get())
-                invokeWithMethodHandle(instance, fieldIndex, SETTER, (Class<T>) classInfo.fieldTypes[fieldIndex]);
-            else accessor.set(instance, fieldIndex, convert(value, (Class<T>) classInfo.fieldTypes[fieldIndex]));
+                invokeWithMethodHandle(instance, fieldIndex, SETTER, convert(value, clz));
+            else accessor.set(instance, fieldIndex, convert(value, clz));
             return;
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format("Unable to set field '%s.%s' as '%s': %s ",  //

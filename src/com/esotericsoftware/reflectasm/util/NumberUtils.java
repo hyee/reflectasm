@@ -82,6 +82,12 @@ public abstract class NumberUtils {
             isClass = true;
         }
 
+        if (clz == String.class && toClass == byte[].class)
+            return (T) (isGetDistance ? 5 : isClass ? toClass : ((String) from).getBytes());
+
+        if (clz == byte[].class && toClass == String.class)
+            return (T) (isGetDistance ? 5 : isClass ? toClass : new String((byte[]) from));
+
         if (clz == toClass || toClass.isAssignableFrom(clz)) return (T) (isGetDistance ? 5 : from);
         if (toClass.isArray() && clz.isArray()) {
             int distance = 5;
@@ -103,11 +109,11 @@ public abstract class NumberUtils {
             }
             if (clz == String.class) return (T) (isGetDistance ? 1 : isClass ? clz : parseNumber((String) from, to));
             if (clz == Character.class || clz == char.class)
-                return (T) (isGetDistance ? 3 : isClass ? toClass : convertNumberToTargetClass(Character.digit((Character) from, 10), to));
+                return (T) (isGetDistance ? 3 : isClass ? toClass : convertNumberToTargetClass((int) ((Character) from).charValue(), to));
         }
         if ((toClass == Character.class || toClass == char.class)) {
             if (STANDARD_NUMBER_TYPES.contains(clz))
-                return (T) (isGetDistance ? 3 : isClass ? toClass : Character.forDigit(((Number) from).intValue(), 10));
+                return (T) (isGetDistance ? 3 : isClass ? toClass : Character.valueOf((char) ((Number) from).intValue()));
             if (clz == String.class) {
                 if (isClass) return (T) (isGetDistance ? 3 : isClass ? clz : toClass);
                 if (((String) from).length() == 1)
@@ -139,14 +145,14 @@ public abstract class NumberUtils {
      * @return the converted number
      * @throws IllegalArgumentException if the target class is not supported
      *                                  (i.e. not a standard Number subclass as included in the JDK)
-     * @see java.lang.Byte
-     * @see java.lang.Short
-     * @see java.lang.Integer
-     * @see java.lang.Long
-     * @see java.math.BigInteger
-     * @see java.lang.Float
-     * @see java.lang.Double
-     * @see java.math.BigDecimal
+     * @see Byte
+     * @see Short
+     * @see Integer
+     * @see Long
+     * @see BigInteger
+     * @see Float
+     * @see Double
+     * @see BigDecimal
      */
     @SuppressWarnings("unchecked")
     public static <T extends Number> T convertNumberToTargetClass(Number number, Class<T> targetClass) throws IllegalArgumentException {
@@ -254,7 +260,7 @@ public abstract class NumberUtils {
      * @see #decodeBigInteger(String)
      * @see Float#valueOf
      * @see Double#valueOf
-     * @see java.math.BigDecimal#BigDecimal(String)
+     * @see BigDecimal#BigDecimal(String)
      */
     @SuppressWarnings("unchecked")
     public static <T extends Number> T parseNumber(String text, Class<T> targetClass) {
@@ -295,7 +301,7 @@ public abstract class NumberUtils {
     }
 
     /**
-     * Decode a {@link java.math.BigInteger} from the supplied {@link String} value.
+     * Decode a {@link BigInteger} from the supplied {@link String} value.
      * <p>Supports decimal, hex, and octal notation.
      *
      * @see BigInteger#BigInteger(String, int)
