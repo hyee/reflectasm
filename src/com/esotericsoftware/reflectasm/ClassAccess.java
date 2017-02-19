@@ -1334,21 +1334,21 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         }
     }
 
-    public <T, V> T invokeWithIndex(ANY instance, final int methodIndex, V... args) {
+    final public <T, V> T invokeWithIndex(ANY instance, final int methodIndex, V... args) {
         Object[] arg = args;
         if (!IS_STRICT_CONVERT) arg = reArgs(METHOD, methodIndex, args);
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(instance, methodIndex, METHOD, arg);
         return accessor.invokeWithIndex(instance, methodIndex, arg);
     }
 
-    public <T, V> T invoke(ANY instance, String methodName, V... args) {
-        Integer index = indexOf(methodName, METHOD);
-        if (index == null) index = indexOfMethod(null, methodName, args2Types(args));
-        return invokeWithIndex(instance, index, args);
+    final public <T, V> T invoke(ANY instance, String methodName, V... args) {
+        final int index = indexOfMethod(null, methodName, args2Types(args));
+        return invokeWithIndex(!methodName.equals(NEW) && Modifier.isStatic(classInfo.methodModifiers[index]) ? null : instance, index, args);
     }
 
-    public <T, V> T invokeWithTypes(ANY instance, String methodName, Class[] paramTypes, V... args) {
-        return invokeWithIndex(instance, indexOfMethod(null, methodName, paramTypes), args);
+    final public <T, V> T invokeWithTypes(ANY instance, String methodName, Class[] paramTypes, V... args) {
+        final int index = indexOfMethod(null, methodName, paramTypes);
+        return invokeWithIndex(!methodName.equals(NEW) && Modifier.isStatic(classInfo.methodModifiers[index]) ? null : instance, index, args);
     }
 
     @Override
@@ -1361,24 +1361,24 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         return new MethodHandle[0][];
     }
 
-    public ANY newInstance() {
+    final public ANY newInstance() {
         if (isNonStaticMemberClass())
             throw new IllegalArgumentException("Cannot initialize a non-static inner class " + classInfo.baseClass.getCanonicalName() + " without specifing the enclosing instance!");
         return accessor.newInstance();
     }
 
-    public <V> ANY newInstanceWithIndex(int constructorIndex, V... args) {
+    final public <V> ANY newInstanceWithIndex(int constructorIndex, V... args) {
         V[] arg = args;
         if (!IS_STRICT_CONVERT) args = reArgs(NEW, constructorIndex, args);
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(null, constructorIndex, NEW, arg);
         return accessor.newInstanceWithIndex(constructorIndex, args);
     }
 
-    public <T> ANY newInstanceWithTypes(Class[] paramTypes, T... args) {
+    final public <T> ANY newInstanceWithTypes(Class[] paramTypes, T... args) {
         return newInstanceWithIndex(indexOfMethod(null, NEW, paramTypes), args);
     }
 
-    public ANY newInstance(Object... args) {
+    final public ANY newInstance(Object... args) {
         Integer index = indexOf(NEW, METHOD);
         if (index == null) {
             Class[] paramTypes = new Class[args.length];
@@ -1388,7 +1388,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         return newInstanceWithIndex(index, args);
     }
 
-    public <T, V> void set(ANY instance, int fieldIndex, V value) {
+    final public <T, V> void set(ANY instance, int fieldIndex, V value) {
         if (!IS_STRICT_CONVERT) try {
             Class<T> clz = classInfo.fieldTypes[fieldIndex];
             if (isInvokeWithMethodHandle.get())
