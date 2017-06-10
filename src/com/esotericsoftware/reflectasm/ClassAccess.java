@@ -1105,7 +1105,12 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
             if (argTypes[i] == null) clz = null;
             else if (argTypes[i] instanceof Class) clz = (Class) argTypes[i];
             else clz = argTypes[i].getClass();
-            sb.append(clz == null ? "null" : clz.getCanonicalName().startsWith("java.lang.") ? clz.getSimpleName() : clz.getCanonicalName());
+            if (clz == null) sb.append("null");
+            else {
+                String clzName = clz.getCanonicalName();
+                if (clzName == null) clzName = clz.getName();
+                sb.append(clz == null ? "null" : clzName.startsWith("java.lang.") ? clz.getSimpleName() : clzName);
+            }
             sb.append(i == argTypes.length - 1 ? "" : ",");
         }
         sb.append(")");
@@ -1298,7 +1303,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                             throw new IllegalArgumentException("Cannot assign null to element#" + paramCount + ": " + varArgsType.getCanonicalName());
                         var = Array.newInstance(subType, 1);
                     } else if (getDistance(var.getClass(), varArgsType) <= getDistance(var.getClass(), subType))
-                        var = Arrays.copyOfRange(args, last - 1, last);
+                        var = Arrays.copyOfRange(args, last, argCount);
                 } else {
                     var = Array.newInstance(subType, 0);
                 }
@@ -1337,18 +1342,19 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     final public <T, V> T invokeWithIndex(ANY instance, final int methodIndex, V... args) {
         Object[] arg = args;
         if (!IS_STRICT_CONVERT) arg = reArgs(METHOD, methodIndex, args);
+        instance = Modifier.isStatic(classInfo.methodModifiers[methodIndex]) ? null : instance;
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(instance, methodIndex, METHOD, arg);
         return accessor.invokeWithIndex(instance, methodIndex, arg);
     }
 
     final public <T, V> T invoke(ANY instance, String methodName, V... args) {
         final int index = indexOfMethod(null, methodName, args2Types(args));
-        return invokeWithIndex(!methodName.equals(NEW) && Modifier.isStatic(classInfo.methodModifiers[index]) ? null : instance, index, args);
+        return invokeWithIndex(instance, index, args);
     }
 
     final public <T, V> T invokeWithTypes(ANY instance, String methodName, Class[] paramTypes, V... args) {
         final int index = indexOfMethod(null, methodName, paramTypes);
-        return invokeWithIndex(!methodName.equals(NEW) && Modifier.isStatic(classInfo.methodModifiers[index]) ? null : instance, index, args);
+        return invokeWithIndex(instance, index, args);
     }
 
     @Override
@@ -1389,6 +1395,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     }
 
     final public <T, V> void set(ANY instance, int fieldIndex, V value) {
+        instance = Modifier.isStatic(classInfo.fieldModifiers[fieldIndex]) ? null : instance;
         if (!IS_STRICT_CONVERT) try {
             Class<T> clz = classInfo.fieldTypes[fieldIndex];
             if (isInvokeWithMethodHandle.get())
@@ -1441,7 +1448,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     public <T> T get(ANY instance, int fieldIndex) {
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(instance, fieldIndex, GETTER);
-        return accessor.get(instance, fieldIndex);
+        return accessor.get(Modifier.isStatic(classInfo.fieldModifiers[fieldIndex]) ? null : instance, fieldIndex);
     }
 
     public <T> T get(ANY instance, String fieldName) {

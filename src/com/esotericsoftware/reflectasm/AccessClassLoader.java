@@ -117,7 +117,7 @@ class AccessClassLoader extends ClassLoader {
         return defineClassMethod;
     }
 
-    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    protected java.lang.Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         // These classes come from the classloader that loaded AccessClassLoader.
         if (name.equals(ClassAccess.class.getName())) return ClassAccess.class;
         // All other classes come from the classloader that loaded the type we are accessing.

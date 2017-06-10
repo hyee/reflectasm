@@ -145,14 +145,14 @@ public abstract class NumberUtils {
      * @return the converted number
      * @throws IllegalArgumentException if the target class is not supported
      *                                  (i.e. not a standard Number subclass as included in the JDK)
-     * @see Byte
-     * @see Short
-     * @see Integer
-     * @see Long
-     * @see BigInteger
-     * @see Float
-     * @see Double
-     * @see BigDecimal
+     * @see java.lang.Byte
+     * @see java.lang.Short
+     * @see java.lang.Integer
+     * @see java.lang.Long
+     * @see java.math.BigInteger
+     * @see java.lang.Float
+     * @see java.lang.Double
+     * @see java.math.BigDecimal
      */
     @SuppressWarnings("unchecked")
     public static <T extends Number> T convertNumberToTargetClass(Number number, Class<T> targetClass) throws IllegalArgumentException {
@@ -260,7 +260,7 @@ public abstract class NumberUtils {
      * @see #decodeBigInteger(String)
      * @see Float#valueOf
      * @see Double#valueOf
-     * @see BigDecimal#BigDecimal(String)
+     * @see java.math.BigDecimal#BigDecimal(String)
      */
     @SuppressWarnings("unchecked")
     public static <T extends Number> T parseNumber(String text, Class<T> targetClass) {
@@ -301,7 +301,7 @@ public abstract class NumberUtils {
     }
 
     /**
-     * Decode a {@link BigInteger} from the supplied {@link String} value.
+     * Decode a {@link java.math.BigInteger} from the supplied {@link String} value.
      * <p>Supports decimal, hex, and octal notation.
      *
      * @see BigInteger#BigInteger(String, int)
