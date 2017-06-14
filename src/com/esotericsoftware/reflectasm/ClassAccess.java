@@ -130,7 +130,9 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         }
     }
 
-    public static int activeAccessClassLoaders() {return AccessClassLoader.activeAccessClassLoaders();}
+    public static int activeAccessClassLoaders() {
+        return AccessClassLoader.activeAccessClassLoaders();
+    }
 
     public static void buildIndex(ClassInfo info) {
         if (info == null || info.attrIndex != null) return;
@@ -205,7 +207,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     synchronized (loader) {
                         try {
                             accessClass = (Class<ANY>) loader.loadClass(accessClassName);
-                        } catch (ClassNotFoundException ignore2) {}
+                        } catch (ClassNotFoundException ignore2) {
+                        }
                     }
                 }
                 if (accessClass != null) {
@@ -481,7 +484,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 cw.visitOuterClass(outerClass, null, null);
                 cw.visitInnerClass(classNameInternal, outerClass, info.baseClass.getSimpleName(), info.baseClass.getModifiers());
             }
-        } catch (Throwable e) {}
+        } catch (Throwable e) {
+        }
         MethodVisitor mv;
 
         //Constructor
@@ -1177,7 +1181,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 int thisDistance = 0;
                 final int paramCount = paramTypes[index].length;
                 final int last = paramCount - 1;
-                final boolean isVarArgs = isVarArgs(modifiers[index]);
+                final Class lastClass = last < 0 ? null : paramTypes[index][last];
+                final boolean isVarArgs = isVarArgs(modifiers[index]) || (lastClass != null && lastClass.isArray() && argCount > last);
                 for (int i = 0, n = Math.min(argCount, paramCount); i < n; i++) {
                     if (i == last && isVarArgs) break;
                     val[i] = IS_STRICT_CONVERT ? 10 : NumberUtils.getDistance(argTypes[i], paramTypes[index][i]);
@@ -1188,17 +1193,18 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                 if (argCount > last && isVarArgs) {
                     if (!IS_STRICT_CONVERT) {
                         final Class arrayType = paramTypes[index][last].getComponentType();
+                        int sum=0;
                         for (int i = last; i < argCount; i++) {
                             thisDistance += stepSize;
-                            int dis = 5;
                             val[i] = Math.max(getDistance(argTypes[i], arrayType), getDistance(argTypes[i], paramTypes[index][last]));
-                            dis = Math.min(dis, val[i]);
-                            min = Math.min(dis, min);
-                            thisDistance += dis;
+                            min=Math.min(min,val[i]);
+                            if(val[i]<=0) sum=-stepSize;
+                            else sum+=val[i];
                         }
+                        thisDistance+=sum;
                     }
-                } else if (paramCount - argCount > 0) {
-                    thisDistance -= (paramCount - argCount) * stepSize;
+                } else if (paramCount != argCount) {
+                    thisDistance -= (Math.abs(paramCount - argCount)-(isVarArgs(modifiers[index])?1:0)) * stepSize/(argCount>paramCount?2:1);
                 }
                 if (thisDistance > distance) {
                     distance = thisDistance;
@@ -1218,7 +1224,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     || (argCount < paramTypes[result].length && !isVarArgs(modifiers[result])) //
                     || (isVarArgs(modifiers[result]) && argCount < paramTypes[result].length - 1)) {
                 String str = "Unable to apply " + (methodName.equals(NEW) ? "constructor" : METHOD) + ":\n    " + typesToString(methodName, argTypes) //
-                        + (result == -1 ? "" : "\n => " + typesToString(methodName, paramTypes[result])) + "\n";
+                        + (result == -1 ? "" : "\n => " + typesToString(methodName, paramTypes[result]));
                 if (IS_DEBUG && result >= 0) {
                     System.out.println(String.format("Method=%s, Index=%d, isVarArgs=%s, MinDistance=%d%s", methodName, result, isVarArgs(modifiers[result]) + "(" + modifiers[result] + ")", minDistance, Arrays.toString(distances)));
                     for (int i = 0; i < Math.max(argCount, paramTypes[result].length); i++) {
@@ -1274,7 +1280,8 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         final int modifier = isNewInstance ? classInfo.constructorModifiers[index] : classInfo.methodModifiers[index];
         final int argCount = args.length;
         final int last = paramCount - 1;
-        final boolean isVarArgs = isVarArgs(modifier);
+        final Class lastClass = last < 0 ? null : paramTypes[last];
+        final boolean isVarArgs = isVarArgs(modifier) || (argCount >= paramCount && (lastClass != null && lastClass.isArray()));
 
         if (argCount < (isVarArgs ? last : paramCount)) {
             String methodName = getMethodNameByParamTypes(paramTypes);
@@ -1341,6 +1348,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
 
     final public <T, V> T invokeWithIndex(ANY instance, final int methodIndex, V... args) {
         Object[] arg = args;
+        if(classInfo.methodCount<=methodIndex) throw new IllegalArgumentException("No such method index: "+methodIndex);
         if (!IS_STRICT_CONVERT) arg = reArgs(METHOD, methodIndex, args);
         instance = Modifier.isStatic(classInfo.methodModifiers[methodIndex]) ? null : instance;
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(instance, methodIndex, METHOD, arg);
@@ -1447,6 +1455,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
     }
 
     public <T> T get(ANY instance, int fieldIndex) {
+        if(classInfo.fieldCount<=fieldIndex) throw new IllegalArgumentException("No such field index: "+fieldIndex);
         if (isInvokeWithMethodHandle.get()) return invokeWithMethodHandle(instance, fieldIndex, GETTER);
         return accessor.get(Modifier.isStatic(classInfo.fieldModifiers[fieldIndex]) ? null : instance, fieldIndex);
     }
