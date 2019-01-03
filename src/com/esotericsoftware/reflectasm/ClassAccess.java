@@ -339,6 +339,7 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
         collectClasses(type, classes);
         LinkedHashMap<String, Object> map = new LinkedHashMap();
         LinkedHashMap<String, Object> candidates = new LinkedHashMap();
+        HashMap<String,String> names=new HashMap<>();
         int typeModifier = type.getModifiers();
         for (Class clz : classes) {
             for (Method m : clz.getDeclaredMethods()) {
@@ -355,11 +356,12 @@ public class ClassAccess<ANY> implements Accessor<ANY> {
                     map.put(desc, m);
                     candidates.put(desc, m0);
                 } else candidates.put(desc, m);
+                names.put(m.getName(),"method");
             }
             for (Field f : clz.getDeclaredFields()) {
                 int md1 = f.getModifiers();
-                if (!IS_INCLUDE_NON_PUBLIC && !Modifier.isPublic(md1)) continue;
                 String desc = f.getName();
+                if (!IS_INCLUDE_NON_PUBLIC && !Modifier.isPublic(md1) || "method".equals(names.get(desc))) continue;
                 Field f0 = (Field) map.get(desc);
                 int md0 = f0 == null ? 0 : f0.getModifiers();
                 if (!map.containsKey(desc)) map.put(desc, f);
